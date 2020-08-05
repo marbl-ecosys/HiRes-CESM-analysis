@@ -1,0 +1,11 @@
+name: hires-marbl
+channels:
+  - conda-forge
+dependencies:
+  - cmocean
+  - dask
+  - ipykernel
+  - matplotlib
+  - netcdf4
+  - numpy
+  - xarray
