@@ -7,11 +7,11 @@ import xarray as xr
 
 ################################################################################
 
-def get_pop_daily_ds(casenames, start_date='0001-01', verbose=False):
+def get_pop_daily_ds(casenames, start_date='0001-01', end_date=None, verbose=False):
     """
         Return an xarray dataset containing pop daily history files
     """
-    files = _get_pop_history_files(casenames, 'pop.h.nday1', start_date, 'YYYY-MM-01', verbose)
+    files = _get_pop_history_files(casenames, 'pop.h.nday1', start_date, end_date, 'YYYY-MM-01', verbose)
     if verbose:
       print('Opening xarray datasets...')
     ds = xr.open_mfdataset(files, combine='nested', concat_dim='time', decode_times=False)
@@ -36,7 +36,7 @@ def _get_archive_log_dir(casename):
 
 ################################################################################
 
-def _get_pop_history_files(casenames, stream, start_date, date_template, verbose=False):
+def _get_pop_history_files(casenames, stream, start_date, end_date, date_template, verbose=False):
     if type(casenames) == str:
         casenames = [casenames]
     if type(casenames) != list:
@@ -52,10 +52,14 @@ def _get_pop_history_files(casenames, stream, start_date, date_template, verbose
 
     while keep_going:
         found.append(False)
-        date=f'{year:04}-{month:02}-01'
+        date=f'{year:04}-{month:02}'
+        if stream == 'pop.h.nday1':
+            stream_and_date = f'{stream}.{date}-01'
+        else:
+            stream_and_date  = f'{stream}.{date}'
         for rootdir in [_get_archive_pophist_dir, _get_rundir]:
             for casename in casenames:
-                file = os.path.join(rootdir(casename), f'{casename}.pop.h.nday1.{date}.nc')
+                file = os.path.join(rootdir(casename), f'{casename}.{stream_and_date}.nc')
                 found[-1] = os.path.exists(file)
                 if found[-1]:
                     if verbose:
@@ -64,6 +68,8 @@ def _get_pop_history_files(casenames, stream, start_date, date_template, verbose
                     break
             if found[-1]:
                 break
+        if date == end_date:
+            break
         month += 1
         if month>12:
             year += 1
