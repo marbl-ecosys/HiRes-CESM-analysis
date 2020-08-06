@@ -7,11 +7,11 @@ import xarray as xr
 
 ################################################################################
 
-def get_pop_daily_ds(casenames, start_month=1, nmonths=5, verbose=False):
+def get_pop_daily_ds(casenames, start_date='0001-01', end_date=None, verbose=False):
     """
         Return an xarray dataset containing pop daily history files
     """
-    files = _get_daily_pop_files(casenames)
+    files = _get_pop_history_files(casenames, 'pop.h.nday1', start_date, end_date, 'YYYY-MM-01', verbose)
     if verbose:
       print('Opening xarray datasets...')
     ds = xr.open_mfdataset(files, combine='nested', concat_dim='time', decode_times=False)
@@ -36,7 +36,7 @@ def _get_archive_log_dir(casename):
 
 ################################################################################
 
-def _get_daily_pop_files(casenames, start_month=1, nmonths=5, verbose=False):
+def _get_pop_history_files(casenames, stream, start_date, end_date, date_template, verbose=False):
     if type(casenames) == str:
         casenames = [casenames]
     if type(casenames) != list:
@@ -44,12 +44,22 @@ def _get_daily_pop_files(casenames, start_month=1, nmonths=5, verbose=False):
 
     files = []
     found = []
-    for month in range(start_month, start_month+nmonths):
+    keep_going = True
+
+    dates = start_date.split('-')
+    year = int(dates[0])
+    month = int(dates[1])
+
+    while keep_going:
         found.append(False)
-        date=f'0001-0{month}-01'
+        date=f'{year:04}-{month:02}'
+        if stream == 'pop.h.nday1':
+            stream_and_date = f'{stream}.{date}-01'
+        else:
+            stream_and_date  = f'{stream}.{date}'
         for rootdir in [_get_archive_pophist_dir, _get_rundir]:
             for casename in casenames:
-                file = os.path.join(rootdir(casename), f'{casename}.pop.h.nday1.{date}.nc')
+                file = os.path.join(rootdir(casename), f'{casename}.{stream_and_date}.nc')
                 found[-1] = os.path.exists(file)
                 if found[-1]:
                     if verbose:
@@ -58,8 +68,15 @@ def _get_daily_pop_files(casenames, start_month=1, nmonths=5, verbose=False):
                     break
             if found[-1]:
                 break
-        if not found[-1] and verbose:
-            print(f'No match for {date}')
+        if date == end_date:
+            break
+        month += 1
+        if month>12:
+            year += 1
+            month -= 12
+        keep_going = found[-1]
+
+    if verbose:
+        print(f'No match for {date}')
 
     return files
-
