@@ -6,6 +6,7 @@ dependencies:
   - dask
   - ipykernel
   - matplotlib
+  - nc-time-axis
   - netcdf4
   - numpy
   - xarray

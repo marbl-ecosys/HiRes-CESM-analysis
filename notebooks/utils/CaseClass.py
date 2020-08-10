@@ -33,10 +33,12 @@ class HiResRun(object):
         self._read_log('cesm')
 
         warning_count = dict()
+        # For each date, pull value from most recent log file
         for date in self.log_contents['cesm']:
-            warning_count[date] = []
-            for log in self.log_contents['cesm'][date]:
-                warning_count[date].append(sum(['MARBL WARNING (marbl_co2calc_mod:drtsafe): (marbl_co2calc_mod:drtsafe) it' in entry for entry in self.log_contents['cesm'][date][log]])) 
+            logs = list(self.log_contents['cesm'][date].keys())
+            logs.sort()
+            warning_count[date] = sum(['MARBL WARNING (marbl_co2calc_mod:drtsafe): (marbl_co2calc_mod:drtsafe) it' in entry for entry in self.log_contents['cesm'][date][logs[-1]]])
+
         return warning_count
 
     ############################################################################
@@ -137,7 +139,7 @@ class HiResRun(object):
             # Look for datestamps in log; if none found, save contents as 'date_unknown'
             date_inds = np.where([datestamp in entry for entry in single_log_contents])[0]
             if len(date_inds) == 0:
-                date = 'date_unknown'
+                date = log.split('/')[-1]
                 if date not in contents:
                     contents[date] = dict()
                 contents[date][log] = single_log_contents
@@ -147,7 +149,7 @@ class HiResRun(object):
             dates_in_log = [entry.split(datestamp)[1].strip()[:8] for entry in np.array(single_log_contents)[date_inds].tolist()]
             # add first day of run to dates_in_log, and prepend 0 to date_inds
             date_inds = np.insert(date_inds, 0, 0)
-            dates_in_log = _add_first_date(dates_in_log)
+            dates_in_log = _add_first_date_and_reformat(dates_in_log)
 
             # for each date, add contents to dictionary 
             for n, date in enumerate(dates_in_log[:-1]):
@@ -205,12 +207,17 @@ def _get_archive_log_dir(casename):
 
 ################################################################################
 
-def _add_first_date(date_list):
-    year = int(date_list[0][:4])
-    month = int(date_list[0][4:6])
-    day = int(date_list[0][6:])
-    if day > 1:
-        first_date = f'{year:04}{month:02}{(day-1):02}'
-    else:
-        first_date = 'first'
-    return [first_date] + date_list
+def _add_first_date_and_reformat(date_list):
+    new_list = []
+    for date in date_list:
+        year = int(date[:4])
+        month = int(date[4:6])
+        day = int(date[6:])
+        if len(new_list) == 0:
+            if day > 1:
+                first_date = f'{year:04}-{month:02}-{(day-1):02}'
+            else:
+                first_date = 'first'
+            new_list.append(first_date)
+        new_list.append(f'{year:04}-{month:02}-{day:02}')
+    return new_list

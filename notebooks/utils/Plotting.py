@@ -4,6 +4,8 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
+import xarray as xr
+import cftime
 
 ################################################################################
 
@@ -62,6 +64,26 @@ def compare_fields_at_lat_lon(list_of_cases, varname, stream, nlat, nlon, indivi
         plt.xlabel('Date (year 0001)')
 
     return fig
+
+################################################################################
+
+def plot_dict_with_date_keys(dict_in, title):
+    """
+        Assume that keys of dict_in are 'YYYYMMDD' and values are numeric
+    """
+    time_units = 'days since 0001-01-01 0:00:00'
+    time = []
+    array_val = []
+    for date in dict_in.keys():
+         if 'log' not in date:
+            (year, month, day) = date.split('-')
+            time.append(cftime.DatetimeNoLeap(int(year), int(month), int(day)))
+            array_val.append(dict_in[date])
+
+    da = xr.DataArray(array_val, dims='time')
+    da['time'] = time
+    da.plot()
+    plt.title(title)
 
 ################################################################################
 
