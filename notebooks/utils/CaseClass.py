@@ -8,6 +8,8 @@ import gzip as gz
 import numpy as np
 import xarray as xr
 
+from . import config # local module, not available through __init__
+
 ################################################################################
 
 class HiResRun(object):
@@ -29,7 +31,7 @@ class HiResRun(object):
 
     ############################################################################
 
-    def get_co2calc_warning_cnt(self):
+    def get_co2calc_warning_cnt(self, max_it=4):
         self._read_log('cesm')
 
         warning_count = dict()
@@ -37,7 +39,9 @@ class HiResRun(object):
         for date in self.log_contents['cesm']:
             logs = list(self.log_contents['cesm'][date].keys())
             logs.sort()
-            warning_count[date] = sum(['MARBL WARNING (marbl_co2calc_mod:drtsafe): (marbl_co2calc_mod:drtsafe) it' in entry for entry in self.log_contents['cesm'][date][logs[-1]]])
+            warning_count[date] = []
+            for it in range(1, max_it+1):
+                warning_count[date].append(sum([f'MARBL WARNING (marbl_co2calc_mod:drtsafe): (marbl_co2calc_mod:drtsafe) it = {it}' in entry for entry in self.log_contents['cesm'][date][logs[-1]]]))
 
         return warning_count
 
@@ -50,7 +54,7 @@ class HiResRun(object):
         files = dict()
         for component in ['cesm', 'ocn', 'cpl']:
             files[component] = []
-            for rootdir in [_get_archive_log_dir, _get_rundir]:
+            for rootdir in [config.get_archive_log_dir, config.get_rundir]:
                 for casename in self._casenames:
                     files[component] += glob.glob(os.path.join(rootdir(casename), f'{component}.log.*'))
         return files
@@ -79,7 +83,7 @@ class HiResRun(object):
                     stream_and_date = f'{stream}.{date}-01'
                 else:
                     stream_and_date  = f'{stream}.{date}'
-                for rootdir in [_get_archive_pophist_dir, _get_rundir]:
+                for rootdir in [config.get_archive_pophist_dir, config.get_rundir]:
                     for casename in self._casenames:
                         file = os.path.join(rootdir(casename), f'{casename}.{stream_and_date}.nc')
                         found[stream][-1] = os.path.exists(file)
@@ -149,7 +153,7 @@ class HiResRun(object):
             dates_in_log = [entry.split(datestamp)[1].strip()[:8] for entry in np.array(single_log_contents)[date_inds].tolist()]
             # add first day of run to dates_in_log, and prepend 0 to date_inds
             date_inds = np.insert(date_inds, 0, 0)
-            dates_in_log = _add_first_date_and_reformat(dates_in_log)
+            dates_in_log = config.add_first_date_and_reformat(dates_in_log)
 
             # for each date, add contents to dictionary 
             for n, date in enumerate(dates_in_log[:-1]):
@@ -165,7 +169,9 @@ class HiResRun(object):
                     contents[date] = dict()
                 contents[date][log] = single_log_contents[date_inds[-1]:]
 
-        self.log_contents[component] = contents
+        self.log_contents[component] = dict()
+        for key in sorted(contents):
+            self.log_contents[component][key] = contents[key]
 
     ############################################################################
     
@@ -182,42 +188,3 @@ class HiResRun(object):
         self.history_contents[stream] = xr.open_mfdataset(self._history_filenames[stream], combine='nested', concat_dim='time', decode_times=False)
         print(f'Datasets contain a total of {self.history_contents[stream].sizes["time"]} days')
         print(f'Last daily average written at midnight on {xr.decode_cf(self.history_contents[stream])["time"].data[-1].strftime(format="%b %d")}')
-
-
-
-################################################################################
-
-#####################################
-## HELPER FUNCTIONS                ##
-## No need to be part of the class ##
-#####################################
-
-def _get_rundir(casename):
-    return os.path.join(os.sep, 'glade', 'scratch', 'mlevy', casename, 'run')
-
-################################################################################
-
-def _get_archive_pophist_dir(casename):
-    return os.path.join(os.sep, 'glade', 'scratch', 'mlevy', 'archive', casename, 'ocn', 'hist')
-
-################################################################################
-
-def _get_archive_log_dir(casename):
-    return os.path.join(os.sep, 'glade', 'scratch', 'mlevy', 'archive', casename, 'logs')
-
-################################################################################
-
-def _add_first_date_and_reformat(date_list):
-    new_list = []
-    for date in date_list:
-        year = int(date[:4])
-        month = int(date[4:6])
-        day = int(date[6:])
-        if len(new_list) == 0:
-            if day > 1:
-                first_date = f'{year:04}-{month:02}-{(day-1):02}'
-            else:
-                first_date = 'first'
-            new_list.append(first_date)
-        new_list.append(f'{year:04}-{month:02}-{day:02}')
-    return new_list

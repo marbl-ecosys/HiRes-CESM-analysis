@@ -52,7 +52,7 @@ def compare_fields_at_lat_lon(list_of_cases, varname, stream, nlat, nlon, indivi
             else:
                 plt.xlabel('')
     else:
-        fig = plt.figure(figsize=(9.0, 5.25))
+        fig = plt.figure(figsize=(9.0, 5.25), clear=True)
         fig.suptitle(f'Mix Layer Depth at ({long_west:.2f} W, {lat_south:.2f} S)')
 
         for da in list_of_das:
@@ -67,7 +67,7 @@ def compare_fields_at_lat_lon(list_of_cases, varname, stream, nlat, nlon, indivi
 
 ################################################################################
 
-def plot_dict_with_date_keys(dict_in, title):
+def plot_dict_with_date_keys(dict_in, title, legend=None):
     """
         Assume that keys of dict_in are 'YYYYMMDD' and values are numeric
     """
@@ -80,10 +80,26 @@ def plot_dict_with_date_keys(dict_in, title):
             time.append(cftime.DatetimeNoLeap(int(year), int(month), int(day)))
             array_val.append(dict_in[date])
 
-    da = xr.DataArray(array_val, dims='time')
+    if type(array_val[0]) == list:
+        dim2 = len(array_val[0])
+        da = xr.DataArray(array_val, dims=['time', 'dim2'])
+    else:
+        dim2 = None
+        da = xr.DataArray(array_val, dims='time')
     da['time'] = time
-    da.plot()
+
+    fig = plt.figure(figsize=(9.0, 5.25), clear=True)
+    if dim2:
+        for dim2ind in range(dim2):
+            da.isel(dim2=dim2ind).plot()
+    else:
+        da.plot()
+    if legend:
+        plt.legend(legend)
     plt.title(title)
+    plt.show()
+
+#     return fig
 
 ################################################################################
 
