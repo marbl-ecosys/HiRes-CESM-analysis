@@ -7,7 +7,8 @@ import numpy as np
 import xarray as xr
 import cftime
 
-import utils
+# local modules, not available through __init__
+from .utils_units import conv_units
 
 ################################################################################
 
@@ -141,29 +142,19 @@ def summary_plot_global_ts(ds, da, var_metadata):
         to_plot = da_weighted.mean(dim=reduce_dims)
         to_plot.attrs = da.attrs
         if "display_units" in var_metadata:
-            to_plot = utils.conv_units(to_plot, var_metadata["display_units"])
+            to_plot = conv_units(to_plot, var_metadata["display_units"])
     if spatial_op == "integrate":
         to_plot = da_weighted.sum(dim=reduce_dims)
         to_plot.attrs = da.attrs
         to_plot.attrs["units"] += f" {weights.attrs['units']}"
         if "integral_display_units" in var_metadata:
-            to_plot = utils.conv_units(
+            to_plot = conv_units(
                 to_plot,
                 var_metadata["integral_display_units"],
                 units_scalef=var_metadata.get("integral_unit_conv"),
             )
     to_plot.plot.line("-o")
     plt.show()
-
-
-################################################################################
-
-
-def _apply_log10_vals(var_metadata):
-    if var_metadata.get("apply_log10", False):
-        return [False, True]
-    else:
-        return [False]
 
 
 ################################################################################
@@ -178,7 +169,7 @@ def summary_plot_histogram(da, var_metadata):
         for t_ind in range(len(da["time"])):
             to_plot = da.isel(time=t_ind)
             if "display_units" in var_metadata:
-                to_plot = utils.conv_units(to_plot, var_metadata["display_units"])
+                to_plot = conv_units(to_plot, var_metadata["display_units"])
             if apply_log10:
                 to_plot = np.log10(xr.where(to_plot > 0, to_plot, np.nan))
                 to_plot.name = f"log10({to_plot.name})"
@@ -204,13 +195,23 @@ def summary_plot_maps(da, var_metadata):
         for t_ind in range(len(da["time"])):
             to_plot = da.isel(time=t_ind)
             if "display_units" in var_metadata:
-                to_plot = utils.conv_units(to_plot, var_metadata["display_units"])
+                to_plot = conv_units(to_plot, var_metadata["display_units"])
             if apply_log10:
                 to_plot = np.log10(xr.where(to_plot > 0.0, to_plot, np.nan))
                 to_plot.name = f"log10({to_plot.name})"
 
             to_plot.plot(cmap=cmap, vmin=vmin, vmax=vmax)
             plt.show()
+
+
+################################################################################
+
+
+def _apply_log10_vals(var_metadata):
+    if var_metadata.get("apply_log10", False):
+        return [False, True]
+    else:
+        return [False]
 
 
 ################################################################################

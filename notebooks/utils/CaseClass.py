@@ -8,8 +8,14 @@ import gzip as gz
 import numpy as np
 import xarray as xr
 
-from . import config  # local module, not available through __init__
-import utils
+# local modules, not available through __init__
+from .config import (
+    add_first_date_and_reformat,
+    get_archive_log_dir,
+    get_archive_pophist_dir,
+    get_rundir,
+)
+from .utils import time_set_mid
 
 ################################################################################
 
@@ -63,7 +69,7 @@ class CaseClass(object):
         files = dict()
         for component in ["cesm", "ocn", "cpl"]:
             files[component] = []
-            for rootdir in [config.get_archive_log_dir, config.get_rundir]:
+            for rootdir in [get_archive_log_dir, get_rundir]:
                 for casename in self._casenames:
                     files[component] += glob.glob(
                         os.path.join(rootdir(casename), f"{component}.log.*")
@@ -94,7 +100,7 @@ class CaseClass(object):
                     stream_and_date = f"{stream}.{date}-01"
                 else:
                     stream_and_date = f"{stream}.{date}"
-                for rootdir in [config.get_archive_pophist_dir, config.get_rundir]:
+                for rootdir in [get_archive_pophist_dir, get_rundir]:
                     for casename in self._casenames:
                         file = os.path.join(
                             rootdir(casename), f"{casename}.{stream_and_date}.nc"
@@ -171,7 +177,7 @@ class CaseClass(object):
             ]
             # add first day of run to dates_in_log, and prepend 0 to date_inds
             date_inds = np.insert(date_inds, 0, 0)
-            dates_in_log = config.add_first_date_and_reformat(dates_in_log)
+            dates_in_log = add_first_date_and_reformat(dates_in_log)
 
             # for each date, add contents to dictionary
             for n, date in enumerate(dates_in_log[:-1]):
@@ -197,7 +203,7 @@ class CaseClass(object):
 
     def _open_history_files(self, stream):
         """
-            Read all history files from a specified stream. Returns a dict where keys
+            Open all history files from a specified stream. Returns a dict where keys
             are stream names and values are xarray Datasets
         """
         if stream in self.history_contents:
@@ -214,7 +220,7 @@ class CaseClass(object):
             compat="override",
             coords="minimal",
         )
-        self.history_contents[stream] = utils.time_set_mid(ds_tmp, "time")
+        self.history_contents[stream] = time_set_mid(ds_tmp, "time")
         print(
             f'Datasets contain a total of {self.history_contents[stream].sizes["time"]} time samples'
         )
