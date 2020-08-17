@@ -6,7 +6,7 @@ channels:
 
 dependencies:
     # core
-    - python
+    - python=3.7
     - pip
     - numpy
     - xarray>=0.15.1
@@ -36,8 +36,9 @@ dependencies:
     - dask-jobqueue
     - dask-mpi
     - distributed
-    
+
     # development
+    - pre-commit
     - black
 
     - pip:
