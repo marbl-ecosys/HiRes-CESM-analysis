@@ -1,12 +1,44 @@
 name: hires-marbl
+
 channels:
-  - conda-forge
+    - conda-forge
+    - defaults
+
 dependencies:
-  - cmocean
-  - dask
-  - ipykernel
-  - matplotlib
-  - nc-time-axis
-  - netcdf4
-  - numpy
-  - xarray
+    # core
+    - python
+    - pip
+    - numpy
+    - xarray>=0.15.1
+    - esmpy
+    - bottleneck
+
+    # serialization
+    - netcdf4
+
+    # notebooks
+    - ipykernel
+    - jupyterlab
+    - jupyter_contrib_nbextensions
+    - jupyter-server-proxy
+
+    # time and units
+    - nc-time-axis
+    - cftime
+    - pint
+
+    # plotting
+    - cmocean
+    - matplotlib
+
+    # dask
+    - dask
+    - dask-jobqueue
+    - dask-mpi
+    - distributed
+    
+    # development
+    - black
+
+    - pip:
+        - ncar-jobqueue

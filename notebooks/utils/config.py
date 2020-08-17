@@ -4,22 +4,31 @@
 
 import os
 
-user = 'mlevy'
+user = "mlevy"
+
 
 def get_rundir(casename):
-    return os.path.join(os.sep, 'glade', 'scratch', user, casename, 'run')
+    return os.path.join(os.sep, "glade", "scratch", user, casename, "run")
+
 
 ################################################################################
+
 
 def get_archive_pophist_dir(casename):
-    return os.path.join(os.sep, 'glade', 'scratch', user, 'archive', casename, 'ocn', 'hist')
+    return os.path.join(
+        os.sep, "glade", "scratch", user, "archive", casename, "ocn", "hist"
+    )
+
 
 ################################################################################
+
 
 def get_archive_log_dir(casename):
-    return os.path.join(os.sep, 'glade', 'scratch', user, 'archive', casename, 'logs')
+    return os.path.join(os.sep, "glade", "scratch", user, "archive", casename, "logs")
+
 
 ################################################################################
+
 
 def add_first_date_and_reformat(date_list):
     new_list = []
@@ -29,9 +38,9 @@ def add_first_date_and_reformat(date_list):
         day = int(date[6:])
         if len(new_list) == 0:
             if day > 1:
-                first_date = f'{year:04}-{month:02}-{(day-1):02}'
+                first_date = f"{year:04}-{month:02}-{(day-1):02}"
             else:
-                first_date = 'first'
+                first_date = "first"
             new_list.append(first_date)
-        new_list.append(f'{year:04}-{month:02}-{day:02}')
+        new_list.append(f"{year:04}-{month:02}-{day:02}")
     return new_list
