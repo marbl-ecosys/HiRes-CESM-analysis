@@ -13,3 +13,5 @@ pre-commit install --install-hooks
 The pre-commit package is already installed via the `hires-marbl` conda environment.
 There is a github action to run `black` on all pull requests,
 but running it locally via-pre-commit will reduce the number of failed actions.
+NOTE: for some reason, to properly install `pre-commit` on the CISL systems,
+the above command must be run from `casper` rather than `cheyenne`.
