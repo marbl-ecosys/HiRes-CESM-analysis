@@ -20,6 +20,38 @@ DpCO2:
     map_vmin: -75.0
     map_vmax: 75.0
 
+spChl:
+    isel_dict:
+        z_t_150m: 0
+    spatial_op: average
+    map_vmin: 1.0e-3
+    map_vmax: 1.0e-1
+    apply_log10: True
+
+coccoChl:
+    isel_dict:
+        z_t_150m: 0
+    spatial_op: average
+    map_vmin: 1.0e-3
+    map_vmax: 1.0
+    apply_log10: True
+
+diatChl:
+    isel_dict:
+        z_t_150m: 0
+    spatial_op: average
+    map_vmin: 1.0e-3
+    map_vmax: 10.0
+    apply_log10: True
+
+diazChl:
+    isel_dict:
+        z_t_150m: 0
+    spatial_op: average
+    map_vmin: 1.0e-4
+    map_vmax: 1.0e-2
+    apply_log10: True
+
 photoC_sp_zint:
     spatial_op: integrate
     integral_unit_conv: (12 g)/(mol) # convert from mol to g C
@@ -81,3 +113,27 @@ O2_ZMIN_DEPTH:
     display_units: m
     map_vmin: 0.0
     map_vmax: 1000.0
+
+PO4:
+    isel_dict:
+        z_t: 0
+    spatial_op: average
+    map_vmin: 1.0e-2
+    map_vmax: 2.2
+    apply_log10: True
+
+NO3:
+    isel_dict:
+        z_t: 0
+    spatial_op: average
+    map_vmin: 1.0e-2
+    map_vmax: 35.0
+    apply_log10: True
+
+SiO3:
+    isel_dict:
+        z_t: 0
+    spatial_op: average
+    map_vmin: 1.0
+    map_vmax: 75.0
+    apply_log10: True

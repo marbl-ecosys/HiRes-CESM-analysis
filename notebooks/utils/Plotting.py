@@ -134,7 +134,7 @@ def _extract_field_from_file(ds, varname, nlat, nlon):
 
 
 def summary_plot_global_ts(ds, da, var_metadata):
-    reduce_dims = ["nlat", "nlon"]
+    reduce_dims = da.dims[-2:]
     weights = ds["TAREA"].fillna(0)
     da_weighted = da.weighted(weights)
     spatial_op = var_metadata.get("spatial_op", "average")
