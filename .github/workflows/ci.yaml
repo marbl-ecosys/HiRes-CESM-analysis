@@ -14,7 +14,7 @@ jobs:
         strategy:
             fail-fast: false
         steps:
-            -   uses: action/checkout@v2
+            -   uses: actions/checkout@v2
             -   name: Install conda
                 uses: goanpeca/setup-miniconda@v1
                 with:
