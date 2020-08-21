@@ -1,4 +1,4 @@
-POC_FLUX_100m:
+-   varname: POC_FLUX_100m
     spatial_op: integrate
     integral_unit_conv: (12 g)/(mol) # convert from mol to g C
     integral_display_units: Pg / yr
@@ -7,7 +7,7 @@ POC_FLUX_100m:
     map_vmax: 10.0
     apply_log10: True
 
-FG_CO2:
+-   varname: FG_CO2
     spatial_op: integrate
     integral_unit_conv: (12 g)/(mol) # convert from mol to g C
     integral_display_units: Pg / yr
@@ -15,12 +15,12 @@ FG_CO2:
     map_vmin: -10.0
     map_vmax: 10.0
 
-DpCO2:
+-   varname: DpCO2
     spatial_op: average
     map_vmin: -75.0
     map_vmax: 75.0
 
-spChl:
+-   varname: spChl
     isel_dict:
         z_t_150m: 0
     spatial_op: average
@@ -28,7 +28,7 @@ spChl:
     map_vmax: 1.0e-1
     apply_log10: True
 
-coccoChl:
+-   varname: coccoChl
     isel_dict:
         z_t_150m: 0
     spatial_op: average
@@ -36,7 +36,7 @@ coccoChl:
     map_vmax: 1.0
     apply_log10: True
 
-diatChl:
+-   varname: diatChl
     isel_dict:
         z_t_150m: 0
     spatial_op: average
@@ -44,7 +44,7 @@ diatChl:
     map_vmax: 10.0
     apply_log10: True
 
-diazChl:
+-   varname: diazChl
     isel_dict:
         z_t_150m: 0
     spatial_op: average
@@ -52,7 +52,7 @@ diazChl:
     map_vmax: 1.0e-2
     apply_log10: True
 
-photoC_sp_zint:
+-   varname: photoC_sp_zint
     spatial_op: integrate
     integral_unit_conv: (12 g)/(mol) # convert from mol to g C
     integral_display_units: Pg / yr
@@ -61,7 +61,7 @@ photoC_sp_zint:
     map_vmax: 15.0
     apply_log10: True
 
-photoC_cocco_zint:
+-   varname: photoC_cocco_zint
     spatial_op: integrate
     integral_unit_conv: (12 g)/(mol) # convert from mol to g C
     integral_display_units: Pg / yr
@@ -70,7 +70,7 @@ photoC_cocco_zint:
     map_vmax: 15.0
     apply_log10: True
 
-photoC_diat_zint:
+-   varname: photoC_diat_zint
     spatial_op: integrate
     integral_unit_conv: (12 g)/(mol) # convert from mol to g C
     integral_display_units: Pg / yr
@@ -79,7 +79,7 @@ photoC_diat_zint:
     map_vmax: 15.0
     apply_log10: True
 
-photoC_diaz_zint:
+-   varname: photoC_diaz_zint
     spatial_op: integrate
     integral_unit_conv: (12 g)/(mol) # convert from mol to g C
     integral_display_units: Pg / yr
@@ -89,12 +89,12 @@ photoC_diaz_zint:
     map_vmax: 1.0
     apply_log10: True
 
-PH:
+-   varname: PH
     spatial_op: average
     map_vmin: 8.0
     map_vmax: 8.4
 
-NHx_SURFACE_EMIS:
+-   varname: NHx_SURFACE_EMIS
     spatial_op: integrate
     integral_unit_conv: (14 g)/(mol) # convert from mol to g N
     integral_display_units: Tg yr^-1
@@ -103,18 +103,26 @@ NHx_SURFACE_EMIS:
     map_vmax: 0.01
     apply_log10: True
 
-O2_ZMIN:
+-   varname: O2_ZMIN
     spatial_op: average
     map_vmin: -5.0
     map_vmax: 50.0
 
-O2_ZMIN_DEPTH:
+-   varname: O2_ZMIN_DEPTH
     spatial_op: average
     display_units: m
     map_vmin: 0.0
     map_vmax: 1000.0
 
-PO4:
+-   varname: O2
+    isel_dict:
+        z_t: 28
+    spatial_op: average
+    map_vmin: 1.0
+    map_vmax: 300.0
+    apply_log10: True
+
+-   varname: PO4
     isel_dict:
         z_t: 0
     spatial_op: average
@@ -122,7 +130,14 @@ PO4:
     map_vmax: 2.2
     apply_log10: True
 
-NO3:
+-   varname: PO4
+    isel_dict:
+        z_t: 28
+    spatial_op: average
+    map_vmin: 0.5
+    map_vmax: 3.5
+
+-   varname: NO3
     isel_dict:
         z_t: 0
     spatial_op: average
@@ -130,10 +145,24 @@ NO3:
     map_vmax: 35.0
     apply_log10: True
 
-SiO3:
+-   varname: NO3
+    isel_dict:
+        z_t: 28
+    spatial_op: average
+    map_vmin: 10.0
+    map_vmax: 35.0
+
+-   varname: SiO3
     isel_dict:
         z_t: 0
     spatial_op: average
     map_vmin: 1.0
     map_vmax: 75.0
     apply_log10: True
+
+-   varname: SiO3
+    isel_dict:
+        z_t: 28
+    spatial_op: average
+    map_vmin: 0.0
+    map_vmax: 100.0
