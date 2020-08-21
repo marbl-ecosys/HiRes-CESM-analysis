@@ -22,8 +22,11 @@ jobs:
             -   name: Set up environment
                 shell: bash -l {0}
                 run: |
-                    conda env create -f environments/environment.yaml
-                    conda activate hires-marbl
+                    echo $PWD
+                    ls
+                    ls environments/ || echo "ls failed"
+                    conda env create -f environments/environment.yaml || echo "conda env create failed"
+                    conda activate hires-marbl || echo "conda activate failed"
 
             -   name: Show conda environment
                 shell: bash -l {0}
