@@ -14,18 +14,12 @@ jobs:
         strategy:
             fail-fast: false
         steps:
-            -   uses: actions/checkout@v2
-            -   name: Cache conda
-                uses: actions/cache@v1
-                with:
-                    path: ~/conda_pkgs_dir
-                    key: ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles('environments/environment.yml') }}
             -   uses: goanpeca/setup-miniconda@v1
                 with:
                     activate-environment: hires-marbl
                     auto-update-conda: true
                     environment-file: environments/environment.yml
-            -   name: Set up conda environment
+            -   name: Show conda environment
                 shell: bash -l {0}
                 run: conda list
 
