@@ -14,19 +14,14 @@ jobs:
         strategy:
             fail-fast: false
         steps:
+            -   uses: action/checkout@v2
             -   name: Install conda
                 uses: goanpeca/setup-miniconda@v1
                 with:
                     auto-update-conda: true
-
-            -   name: Set up environment
-                shell: bash -l {0}
-                run: |
-                    echo $PWD
-                    ls
-                    ls environments/ || echo "ls failed"
-                    conda env create -f environments/environment.yaml || echo "conda env create failed"
-                    conda activate hires-marbl || echo "conda activate failed"
+                    activate-environment: hires-marbl
+                    environment-file: environments/environment.yaml
+                    auto-activate-base: false
 
             -   name: Show conda environment
                 shell: bash -l {0}
