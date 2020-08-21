@@ -18,7 +18,7 @@ jobs:
                 with:
                     activate-environment: hires-marbl
                     auto-update-conda: true
-                    environment-file: environments/environment.yml
+                    environment-file: environments/environment.yaml
             -   name: Show conda environment
                 shell: bash -l {0}
                 run: conda list
