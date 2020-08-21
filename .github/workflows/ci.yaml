@@ -22,7 +22,7 @@ jobs:
             -   name: Set up environment
                 shell: bash -l {0}
                 run: |
-                    conda create -f environments/environment.yaml
+                    conda env create -f environments/environment.yaml
                     conda activate hires-marbl
 
             -   name: Show conda environment
@@ -31,4 +31,4 @@ jobs:
 
             -   name: Run Tests
                 shell: bash -l {0}
-                run: pytest tests/
+                run: pytest -v tests/
