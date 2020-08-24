@@ -4,6 +4,25 @@ This repository is building a set of tools for analyzing BGC output in a high-re
 
 ## For Developers
 
+A few recommended practices to incorporate in your development sandbox:
+
+### Keep your conda environment up to date
+
+The first time you check out this repository, run
+
+```
+$ conda env install -f environments/environment.yaml
+```
+
+If you notice the YAML file has changed after you fetch changes from github,
+update the environment with
+
+```
+$ conda env update -f environments/environment.yaml
+```
+
+### Use `pre-commit` to test code before commiting
+
 Please take advantage of the pre-commit package to ensure that `black` is run before commiting:
 
 ```
@@ -15,3 +34,15 @@ There is a github action to run `black` on all pull requests,
 but running it locally via-pre-commit will reduce the number of failed actions.
 NOTE: for some reason, to properly install `pre-commit` on the CISL systems,
 the above command must be run from `casper` rather than `cheyenne`.
+
+### Run `pytest` after modifying python in `utils/`
+
+To test some of the python code in `notebooks/utils/`, run `pytest`.
+These tests can be run from the top level of this repository by running
+
+```
+$ pytest tests/
+```
+
+If you add new code to this directory,
+consider writing small tests to ensure it is running as expected.
