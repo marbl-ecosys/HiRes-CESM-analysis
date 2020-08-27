@@ -5,40 +5,49 @@ channels:
     - defaults
 
 dependencies:
-    # core
-    - python
-    - pip
-    - numpy
-    - xarray>=0.15.1
-    - esmpy
+    - black
     - bottleneck
-
-    # serialization
-    - netcdf4
-
-    # notebooks
-    - ipykernel
-    - jupyterlab
-    - jupyter_contrib_nbextensions
-    - jupyter-server-proxy
-
-    # time and units
-    - nc-time-axis
+    - cartopy
+    - cf_units
     - cftime
-    - pint
-
-    # plotting
     - cmocean
-    - matplotlib
-
-    # dask
     - dask
     - dask-jobqueue
     - dask-mpi
     - distributed
-    
-    # development
-    - black
-
+    - eofs
+    - esmpy
+    - holoviews
+    - intake
+    - intake-esm
+    - ipykernel
+    - jupyter-server-proxy
+    - jupyter_contrib_nbextensions
+    - jupyterlab
+    - matplotlib
+    - metpy
+    - nc-time-axis
+    - netcdf4
+    - numba
+    - numpy
+    - pandas
+    - pint
+    - pip
+    - pop-tools
+    - pytest
+    - python
+    - scipy
+    - seaborn
+    - seawater
+    - statsmodels
+    - toolz
+    - tqdm
+    - watermark
+    - xarray>=0.15.1
+    - xesmf # xarray interface it ESMF tools
+    - xgcm # General Circulation Model Postprocessing with xarray
+    - xhistogram # Fast, flexible, label-aware histograms for numpy and xarray
+    - xrft # fourier transforms for xarray data
+    - zarr
     - pip:
         - ncar-jobqueue
