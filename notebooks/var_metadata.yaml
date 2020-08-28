@@ -52,7 +52,6 @@ photoC_diaz_zint:
     integral_unit_conv: (12 g)/(mol) # convert from mol to g C
     integral_display_units: Pg / yr
     display_units: mol / m^2 / yr
-    apply_log10: True
     map_vmin: 1.0e-2
     map_vmax: 1.0
     apply_log10: True

@@ -39,8 +39,8 @@ dependencies:
 
     # development
     - pre-commit
-    - black
     - pytest
 
     - pip:
         - ncar-jobqueue
+        - black
