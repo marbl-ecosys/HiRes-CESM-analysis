@@ -81,7 +81,7 @@ def compare_fields_at_lat_lon(
 
 def plot_dict_with_date_keys(dict_in, title, legend=None):
     """
-        Assume that keys of dict_in are 'YYYYMMDD' and values are numeric
+    Assume that keys of dict_in are 'YYYYMMDD' and values are numeric
     """
     time_units = "days since 0001-01-01 0:00:00"
     time = []
