@@ -5,7 +5,6 @@ channels:
     - defaults
 
 dependencies:
-    - black
     - bottleneck
     - cartopy
     - cf_units
@@ -51,3 +50,4 @@ dependencies:
     - zarr
     - pip:
         - ncar-jobqueue
+        - black
