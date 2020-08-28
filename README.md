@@ -21,6 +21,13 @@ update the environment with
 $ conda env update -f environments/environment.yaml
 ```
 
+If the `env update` command fails, you can remove the environment and re-create it:
+
+```
+$ conda env remove --name hires-marbl
+$ conda env create -f environments/environment.yaml
+```
+
 ### Use `pre-commit` to test code before commiting
 
 Please take advantage of the pre-commit package to ensure that `black` is run before commiting:
@@ -31,20 +38,13 @@ $ pre-commit run -a                  # check all the files currently in the repo
 ```
 
 The pre-commit package is already installed via the `hires-marbl` conda environment.
-There is a github action to run `black` on all pull requests,
-but running it locally via-pre-commit will reduce the number of failed actions.
+There is a github action to run these checks on all pull requests,
+but running them locally via-pre-commit will reduce the number of failed actions.
 NOTE: for some reason, to properly install `pre-commit` on the CISL systems,
 the above command must be run from `casper` rather than `cheyenne`.
 
 Note that pre-commit creates a virtual environment using specific tags of each package.
-To ensure pre-commit is testing with the latest releases, it is necessary to run
-
-```
-$ pre-commit autoupdate
-$ pre-commit install --install-hooks # set up pre-commit
-```
-
-from time to time.
+As newer versions of `black` become available on `conda-forge`, we will update the pre-commit environment.
 
 ### Run `pytest` after modifying python in `utils/`
 

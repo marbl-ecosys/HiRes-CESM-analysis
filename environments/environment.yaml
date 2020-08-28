@@ -5,6 +5,7 @@ channels:
     - defaults
 
 dependencies:
+    - black=19.10b0
     - bottleneck
     - cartopy
     - cf_units
@@ -33,6 +34,7 @@ dependencies:
     - pint
     - pip
     - pop-tools
+    - pre-commit
     - pytest
     - python
     - scipy
@@ -50,4 +52,3 @@ dependencies:
     - zarr
     - pip:
         - ncar-jobqueue
-        - black

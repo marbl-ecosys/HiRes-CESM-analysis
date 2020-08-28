@@ -7,7 +7,7 @@ repos:
             -   id: check-yaml
 
     -   repo: https://github.com/ambv/black
-        rev: 20.8b1
+        rev: 19.10b0 # consistent with conda environment
         hooks:
             -   id: black
                 args: []
