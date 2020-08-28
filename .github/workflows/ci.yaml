@@ -5,7 +5,7 @@ on:
             -   "*"
     pull_request:
         branches:
-            -   "*"
+            -   "master"
 
 jobs:
     build:
@@ -14,7 +14,9 @@ jobs:
         strategy:
             fail-fast: false
         steps:
-            -   uses: actions/checkout@v2
+            -   name: checkout
+                uses: actions/checkout@v2
+
             -   name: Install conda
                 uses: goanpeca/setup-miniconda@v1
                 with:
