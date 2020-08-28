@@ -64,7 +64,7 @@ class CaseClass(object):
 
     def _find_log_files(self):
         """
-            Look in rundir and archive for cesm.log, ocn.log, and cpl.log files
+        Look in rundir and archive for cesm.log, ocn.log, and cpl.log files
         """
         files = dict()
         for component in ["cesm", "ocn", "cpl"]:
@@ -80,7 +80,7 @@ class CaseClass(object):
 
     def _find_hist_files(self, start_date, end_date):
         """
-            Look in rundir and archive for pop history files
+        Look in rundir and archive for pop history files
         """
         files = dict()
         found = dict()
@@ -130,9 +130,9 @@ class CaseClass(object):
 
     def _read_log(self, component):
         """
-            Read all log files from specified component. Returns a dict where keys
-            are dates and values are contents of log from that date; if multiple
-            logs contain the same date, uses the most recent.
+        Read all log files from specified component. Returns a dict where keys
+        are dates and values are contents of log from that date; if multiple
+        logs contain the same date, uses the most recent.
         """
         if component in self.log_contents:
             return
@@ -203,8 +203,8 @@ class CaseClass(object):
 
     def _open_history_files(self, stream):
         """
-            Open all history files from a specified stream. Returns a dict where keys
-            are stream names and values are xarray Datasets
+        Open all history files from a specified stream. Returns a dict where keys
+        are stream names and values are xarray Datasets
         """
         if stream in self.history_contents:
             return

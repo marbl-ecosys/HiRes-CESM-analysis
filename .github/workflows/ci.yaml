@@ -1,0 +1,32 @@
+name: Continuous Integration
+on:
+    push:
+        branches:
+            -   "*"
+    pull_request:
+        branches:
+            -   "*"
+
+jobs:
+    build:
+        name: Test on ubuntu
+        runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+        steps:
+            -   uses: actions/checkout@v2
+            -   name: Install conda
+                uses: goanpeca/setup-miniconda@v1
+                with:
+                    auto-update-conda: true
+                    activate-environment: hires-marbl
+                    environment-file: environments/environment.yaml
+                    auto-activate-base: false
+
+            -   name: Show conda environment
+                shell: bash -l {0}
+                run: conda list
+
+            -   name: Run Tests
+                shell: bash -l {0}
+                run: pytest -v tests/

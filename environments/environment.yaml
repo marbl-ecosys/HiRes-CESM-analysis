@@ -36,9 +36,11 @@ dependencies:
     - dask-jobqueue
     - dask-mpi
     - distributed
-    
+
     # development
-    - black
+    - pre-commit
+    - pytest
 
     - pip:
         - ncar-jobqueue
+        - black

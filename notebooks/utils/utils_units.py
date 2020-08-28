@@ -27,6 +27,11 @@ def conv_units(da, units_out, units_scalef=None):
 def _clean_units(units):
     """replace some troublesome unit terms with acceptable replacements"""
     replacements = {
+        "kgC": "kg",
+        "gC": "g",
+        "gC13": "g",
+        "gC14": "g",
+        "gN": "g",
         "unitless": "1",
         "years": "common_years",
         "yr": "common_year",
