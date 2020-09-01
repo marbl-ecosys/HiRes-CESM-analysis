@@ -133,25 +133,25 @@ def _extract_field_from_file(ds, varname, nlat, nlon):
 ################################################################################
 
 
-def summary_plot_global_ts(ds, da, var_metadata):
-    reduce_dims = ["nlat", "nlon"]
+def summary_plot_global_ts(ds, da, diag_metadata):
+    reduce_dims = da.dims[-2:]
     weights = ds["TAREA"].fillna(0)
     da_weighted = da.weighted(weights)
-    spatial_op = var_metadata.get("spatial_op", "average")
+    spatial_op = diag_metadata.get("spatial_op", "average")
     if spatial_op == "average":
         to_plot = da_weighted.mean(dim=reduce_dims)
         to_plot.attrs = da.attrs
-        if "display_units" in var_metadata:
-            to_plot = conv_units(to_plot, var_metadata["display_units"])
+        if "display_units" in diag_metadata:
+            to_plot = conv_units(to_plot, diag_metadata["display_units"])
     if spatial_op == "integrate":
         to_plot = da_weighted.sum(dim=reduce_dims)
         to_plot.attrs = da.attrs
         to_plot.attrs["units"] += f" {weights.attrs['units']}"
-        if "integral_display_units" in var_metadata:
+        if "integral_display_units" in diag_metadata:
             to_plot = conv_units(
                 to_plot,
-                var_metadata["integral_display_units"],
-                units_scalef=var_metadata.get("integral_unit_conv"),
+                diag_metadata["integral_display_units"],
+                units_scalef=diag_metadata.get("integral_unit_conv"),
             )
     to_plot.plot.line("-o")
     plt.show()
@@ -160,33 +160,50 @@ def summary_plot_global_ts(ds, da, var_metadata):
 ################################################################################
 
 
-def summary_plot_histogram(da, var_metadata):
+def summary_plot_histogram(da, diag_metadata, lines_per_plot=12):
     # histogram, all time levels in one plot
     hist_bins = 20
     hist_log = True
 
-    for apply_log10 in _apply_log10_vals(var_metadata):
+    for apply_log10 in _apply_log10_vals(diag_metadata):
+        t_ind_beg = 0
         for t_ind in range(len(da["time"])):
             to_plot = da.isel(time=t_ind)
-            if "display_units" in var_metadata:
-                to_plot = conv_units(to_plot, var_metadata["display_units"])
+            if "display_units" in diag_metadata:
+                to_plot = conv_units(to_plot, diag_metadata["display_units"])
             if apply_log10:
                 to_plot = np.log10(xr.where(to_plot > 0, to_plot, np.nan))
                 to_plot.name = f"log10({to_plot.name})"
             to_plot.plot.hist(bins=hist_bins, log=hist_log, histtype="step")
-        plt.show()
+            if t_ind % lines_per_plot == lines_per_plot - 1:
+                t_beg = da.time.values[t_ind_beg]
+                t_str_beg = f"{t_beg.year:04}-{t_beg.month:02}-{t_beg.day:02}"
+                t_ind_end = t_ind
+                t_end = da.time.values[t_ind_end]
+                t_str_end = f"{t_end.year:04}-{t_end.month:02}-{t_end.day:02}"
+                plt.title(f"Histogram: {t_str_beg} : {t_str_end}")
+                t_ind_beg = t_ind_end + 1
+                plt.show()
+        if t_ind % lines_per_plot != lines_per_plot - 1:
+            t_beg = da.time.values[t_ind_beg]
+            t_str_beg = f"{t_beg.year:04}-{t_beg.month:02}-{t_beg.day:02}"
+            t_ind_end = t_ind
+            t_end = da.time.values[t_ind_end]
+            t_str_end = f"{t_end.year:04}-{t_end.month:02}-{t_end.day:02}"
+            plt.title(f"Histogram: {t_str_beg} : {t_str_end}")
+            plt.show()
 
 
 ################################################################################
 
 
-def summary_plot_maps(da, var_metadata):
+def summary_plot_maps(da, diag_metadata):
     # maps, 1 plots for time level
     cmap = "plasma"
 
-    for apply_log10 in _apply_log10_vals(var_metadata):
-        vmin = var_metadata.get("map_vmin")
-        vmax = var_metadata.get("map_vmax")
+    for apply_log10 in _apply_log10_vals(diag_metadata):
+        vmin = diag_metadata.get("map_vmin")
+        vmax = diag_metadata.get("map_vmax")
         if apply_log10:
             if vmin is not None:
                 vmin = np.log10(vmin) if vmin > 0.0 else None
@@ -194,8 +211,8 @@ def summary_plot_maps(da, var_metadata):
                 vmax = np.log10(vmax) if vmax > 0.0 else None
         for t_ind in range(len(da["time"])):
             to_plot = da.isel(time=t_ind)
-            if "display_units" in var_metadata:
-                to_plot = conv_units(to_plot, var_metadata["display_units"])
+            if "display_units" in diag_metadata:
+                to_plot = conv_units(to_plot, diag_metadata["display_units"])
             if apply_log10:
                 to_plot = np.log10(xr.where(to_plot > 0.0, to_plot, np.nan))
                 to_plot.name = f"log10({to_plot.name})"
@@ -207,8 +224,8 @@ def summary_plot_maps(da, var_metadata):
 ################################################################################
 
 
-def _apply_log10_vals(var_metadata):
-    if var_metadata.get("apply_log10", False):
+def _apply_log10_vals(diag_metadata):
+    if diag_metadata.get("apply_log10", False):
         return [False, True]
     else:
         return [False]
