@@ -6,15 +6,16 @@ channels:
 
 dependencies:
     - black=19.10b0
+    - bokeh=1.4
     - bottleneck
     - cartopy
     - cf_units
     - cftime
     - cmocean
-    - dask
+    - dask==2.14
     - dask-jobqueue
     - dask-mpi
-    - distributed
+    - distributed==2.14
     - dask-labextension
     - eofs
     - esmpy
