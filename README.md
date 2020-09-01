@@ -1,4 +1,14 @@
-# HiRes-CESM-analysis
+
+[![GitHub Workflow Status](https://img.shields.io/github/workflow/status/marbl-ecosys/HiRes-CESM-analysis/Continuous%20Integration?label=CI&logo=github&style=for-the-badge)](https://github.com/marbl-ecosys/HiRes-CESM-analysis/actions?query=workflow%3A%22Continuous+Integration%22)
+[![GitHub Workflow Status](https://img.shields.io/github/workflow/status/marbl-ecosys/HiRes-CESM-analysis/Run%20all%20pre-commit%20checks%20one%20more%20time?label=code-style&style=for-the-badge)](https://github.com/marbl-ecosys/HiRes-CESM-analysis/actions?query=workflow%3A%22Run+all+pre-commit+checks+one+more+time%22)
+
+# HiRes-CESM Analysis
+
+- [HiRes-CESM Analysis](#hires-cesm-analysis)
+  - [For Developers](#for-developers)
+    - [Keep your conda environment up to date](#keep-your-conda-environment-up-to-date)
+    - [Use `pre-commit` to test code before commiting](#use-pre-commit-to-test-code-before-commiting)
+    - [Run `pytest` after modifying python in `utils/`](#run-pytest-after-modifying-python-in-utils)
 
 This repository is building a set of tools for analyzing BGC output in a high-resolution POP run.
 
@@ -12,6 +22,8 @@ The first time you check out this repository, run
 
 ```
 $ conda env install -f environments/environment.yaml
+$ conda activate hires-marbl
+$ bash environments/postBuild
 ```
 
 If you notice the YAML file has changed after you fetch changes from github,

@@ -15,12 +15,14 @@ dependencies:
     - dask-jobqueue
     - dask-mpi
     - distributed
+    - dask-labextension
     - eofs
     - esmpy
     - holoviews
     - intake
     - intake-esm
     - ipykernel
+    - ipywidgets
     - jupyter-server-proxy
     - jupyter_contrib_nbextensions
     - jupyterlab
@@ -28,6 +30,7 @@ dependencies:
     - metpy
     - nc-time-axis
     - netcdf4
+    - nodejs
     - numba
     - numpy
     - pandas
