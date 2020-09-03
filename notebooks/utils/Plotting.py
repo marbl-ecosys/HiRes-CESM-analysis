@@ -8,6 +8,7 @@ import xarray as xr
 import cftime
 
 # local modules, not available through __init__
+from .utils import time_year_plus_frac
 from .utils_units import conv_units
 
 ################################################################################
@@ -153,7 +154,16 @@ def summary_plot_global_ts(ds, da, diag_metadata):
                 diag_metadata["integral_display_units"],
                 units_scalef=diag_metadata.get("integral_unit_conv"),
             )
-    to_plot.plot.line("-o")
+    # do not use to_plot.plot.line("-o") because of incorrect time axis values
+    # https://github.com/pydata/xarray/issues/4401
+    fig, ax = plt.subplots()
+    xvals = time_year_plus_frac(to_plot, "time")
+    yvals = to_plot.values
+    ax.plot(xvals, yvals, "-o")
+    ax.set_xlabel("time")
+    name = to_plot.attrs.get("long_name", diag_metadata["varname"])
+    units = to_plot.attrs["units"]
+    ax.set_ylabel(f"{name} [{units}]")
     plt.show()
 
 
