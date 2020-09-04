@@ -9,7 +9,7 @@ import xarray as xr
 
 sys.path.append(os.path.abspath(os.path.join("notebooks", "utils")))
 sys.path.append(os.path.abspath("tests"))
-from utils import time_year_plus_frac, time_set_mid, repl_coord
+from utils import time_year_plus_frac, time_set_mid, repl_coord, round_sig
 from xr_ds_ex import gen_time_bounds_values, xr_ds_ex
 
 nyrs = 300
@@ -89,3 +89,26 @@ def test_time_year_plus_frac(decode_times):
 
     # call time_year_plus_frac to ensure that it doesn't raise an exception
     ty = time_year_plus_frac(ds, "time")
+
+
+@pytest.mark.parametrize(
+    "x, ndigits, expected",
+    [
+        (0.0, 1, 0.0),
+        (0.0, 2, 0.0),
+        (1.25, 1, 1.0),
+        (1.25, 3, 1.25),
+        (12.5, 1, 10.0),
+        (12.5, 2, 12.0),  # round to even
+        (12.5, 3, 12.5),
+        (12.5, 4, 12.5),
+        (13.5, 1, 10.0),
+        (13.5, 2, 14.0),  # round to even
+        (13.5, 3, 13.5),
+        (13.52, 3, 13.5),
+        (13.48, 3, 13.5),
+        (13.5, 4, 13.5),
+    ],
+)
+def test_round_sig(x, ndigits, expected):
+    assert round_sig(x, ndigits) == expected
