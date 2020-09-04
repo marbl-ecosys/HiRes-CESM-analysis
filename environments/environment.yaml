@@ -12,11 +12,11 @@ dependencies:
     - cf_units
     - cftime
     - cmocean
-    - dask==2.14
     - dask-jobqueue
-    - dask-mpi
-    - distributed==2.14
     - dask-labextension
+    - dask-mpi
+    - dask==2.14
+    - distributed==2.14
     - eofs
     - esmpy
     - holoviews
@@ -35,6 +35,7 @@ dependencies:
     - numba
     - numpy
     - pandas
+    - panel
     - pint
     - pip
     - pop-tools
