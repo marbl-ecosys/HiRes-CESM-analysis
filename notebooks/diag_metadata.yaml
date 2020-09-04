@@ -29,36 +29,17 @@
     map_vmin: -75.0
     map_vmax: 75.0
 
+-   varname: PH
+    spatial_op: average
+    map_vmin: 8.0
+    map_vmax: 8.4
+
 -   varname: spChl
     isel_dict:
         z_t_150m: 0
     spatial_op: average
     map_vmin: 1.0e-3
     map_vmax: 1.0e-1
-    apply_log10: True
-
--   varname: coccoChl
-    isel_dict:
-        z_t_150m: 0
-    spatial_op: average
-    map_vmin: 1.0e-3
-    map_vmax: 1.0
-    apply_log10: True
-
--   varname: diatChl
-    isel_dict:
-        z_t_150m: 0
-    spatial_op: average
-    map_vmin: 1.0e-3
-    map_vmax: 10.0
-    apply_log10: True
-
--   varname: diazChl
-    isel_dict:
-        z_t_150m: 0
-    spatial_op: average
-    map_vmin: 1.0e-4
-    map_vmax: 1.0e-2
     apply_log10: True
 
 -   varname: photoC_sp_zint
@@ -70,6 +51,14 @@
     map_vmax: 15.0
     apply_log10: True
 
+-   varname: coccoChl
+    isel_dict:
+        z_t_150m: 0
+    spatial_op: average
+    map_vmin: 1.0e-3
+    map_vmax: 1.0
+    apply_log10: True
+
 -   varname: photoC_cocco_zint
     spatial_op: integrate
     integral_unit_conv: (12 g)/(mol) # convert from mol to g C
@@ -77,6 +66,14 @@
     display_units: mol / m^2 / yr
     map_vmin: 1.0e-2
     map_vmax: 15.0
+    apply_log10: True
+
+-   varname: diatChl
+    isel_dict:
+        z_t_150m: 0
+    spatial_op: average
+    map_vmin: 1.0e-3
+    map_vmax: 10.0
     apply_log10: True
 
 -   varname: photoC_diat_zint
@@ -88,6 +85,14 @@
     map_vmax: 15.0
     apply_log10: True
 
+-   varname: diazChl
+    isel_dict:
+        z_t_150m: 0
+    spatial_op: average
+    map_vmin: 1.0e-4
+    map_vmax: 1.0e-2
+    apply_log10: True
+
 -   varname: photoC_diaz_zint
     spatial_op: integrate
     integral_unit_conv: (12 g)/(mol) # convert from mol to g C
@@ -97,11 +102,6 @@
     map_vmax: 1.0
     apply_log10: True
 
--   varname: PH
-    spatial_op: average
-    map_vmin: 8.0
-    map_vmax: 8.4
-
 -   varname: NHx_SURFACE_EMIS
     spatial_op: integrate
     integral_unit_conv: (14 g)/(mol) # convert from mol to g N
@@ -109,6 +109,14 @@
     display_units: mol / m^2 / yr
     map_vmin: 1.0e-5
     map_vmax: 0.01
+    apply_log10: True
+
+-   varname: NH4
+    isel_dict:
+        z_t: 0
+    spatial_op: average
+    map_vmin: 1.0e-3
+    map_vmax: 3.0
     apply_log10: True
 
 -   varname: O2_ZMIN
