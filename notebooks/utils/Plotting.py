@@ -244,6 +244,31 @@ def summary_plot_maps(da, diag_metadata):
 ################################################################################
 
 
+def trend_plot(da, vmin=None, vmax=None, invert_yaxis=False):
+    trend = da.polyfit("time", 1).polyfit_coefficients.sel(degree=1)
+    trend.name = da.name + " Trend"
+    trend.attrs["long_name"] = da.attrs["long_name"] + " Trend"
+    nsec_per_yr = 1.0e9 * 86400 * 365
+    trend = nsec_per_yr * trend
+    trend.attrs["units"] = da.attrs["units"] + "/yr"
+    trend.load()
+
+    fig, ax = plt.subplots()
+    trend.plot.hist(bins=20, log=True, ax=ax)
+    ax.set_title(da._title_for_slice())
+    plt.show()
+
+    fig, ax = plt.subplots()
+    trend.plot.pcolormesh(cmap="plasma", vmin=vmin, vmax=vmax, ax=ax)
+    ax.set_title(da._title_for_slice())
+    if invert_yaxis:
+        ax.invert_yaxis()
+    plt.show()
+
+
+################################################################################
+
+
 def _apply_log10_vals(diag_metadata):
     if diag_metadata.get("apply_log10", False):
         return [False, True]
