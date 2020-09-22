@@ -8,6 +8,7 @@ import xarray as xr
 import cftime
 
 # local modules, not available through __init__
+from .utils import time_year_plus_frac, round_sig
 from .utils_units import conv_units
 
 ################################################################################
@@ -133,7 +134,7 @@ def _extract_field_from_file(ds, varname, nlat, nlon):
 ################################################################################
 
 
-def summary_plot_global_ts(ds, da, diag_metadata):
+def summary_plot_global_ts(ds, da, diag_metadata, time_coarsen_len=None):
     reduce_dims = da.dims[-2:]
     weights = ds["TAREA"].fillna(0)
     da_weighted = da.weighted(weights)
@@ -153,7 +154,26 @@ def summary_plot_global_ts(ds, da, diag_metadata):
                 diag_metadata["integral_display_units"],
                 units_scalef=diag_metadata.get("integral_unit_conv"),
             )
-    to_plot.plot.line("-o")
+    # do not use to_plot.plot.line("-o") because of incorrect time axis values
+    # https://github.com/pydata/xarray/issues/4401
+    fig, ax = plt.subplots()
+    ax.plot(time_year_plus_frac(to_plot, "time"), to_plot.values, "-o")
+    ax.set_xlabel(xr.plot.utils.label_from_attrs(to_plot["time"]))
+    ax.set_ylabel(xr.plot.utils.label_from_attrs(to_plot))
+    ax.set_title(to_plot._title_for_slice())
+    if time_coarsen_len is not None:
+        tlen = len(to_plot.time)
+        tlen_trunc = (tlen // time_coarsen_len) * time_coarsen_len
+        to_plot_trunc = to_plot.isel(time=slice(0, tlen_trunc))
+        to_plot_coarse = to_plot_trunc.coarsen({"time": time_coarsen_len}).mean()
+        ax.plot(
+            time_year_plus_frac(to_plot_coarse, "time"), to_plot_coarse.values, "-o"
+        )
+        title = ax.get_title()
+        if title != "":
+            title += ", "
+        title += f"last mean value={round_sig(to_plot_coarse.values[-1],4)}"
+        ax.set_title(title)
     plt.show()
 
 
@@ -219,6 +239,31 @@ def summary_plot_maps(da, diag_metadata):
 
             to_plot.plot(cmap=cmap, vmin=vmin, vmax=vmax)
             plt.show()
+
+
+################################################################################
+
+
+def trend_plot(da, vmin=None, vmax=None, invert_yaxis=False):
+    trend = da.polyfit("time", 1).polyfit_coefficients.sel(degree=1)
+    trend.name = da.name + " Trend"
+    trend.attrs["long_name"] = da.attrs["long_name"] + " Trend"
+    nsec_per_yr = 1.0e9 * 86400 * 365
+    trend = nsec_per_yr * trend
+    trend.attrs["units"] = da.attrs["units"] + "/yr"
+    trend.load()
+
+    fig, ax = plt.subplots()
+    trend.plot.hist(bins=20, log=True, ax=ax)
+    ax.set_title(da._title_for_slice())
+    plt.show()
+
+    fig, ax = plt.subplots()
+    trend.plot.pcolormesh(cmap="plasma", vmin=vmin, vmax=vmax, ax=ax)
+    ax.set_title(da._title_for_slice())
+    if invert_yaxis:
+        ax.invert_yaxis()
+    plt.show()
 
 
 ################################################################################

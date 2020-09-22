@@ -1,5 +1,7 @@
 """utility functions"""
 
+import math
+
 import cftime
 import numpy as np
 import xarray as xr
@@ -82,3 +84,11 @@ def time_year_plus_frac(ds, time_name):
     )
 
     return tvals_days / 365.0
+
+
+def round_sig(x, ndigits):
+    """round x to ndigits precision"""
+    if x == 0:
+        return x
+    ndigits_offset = math.floor(math.log10(abs(x)))
+    return round(x, ndigits - 1 - ndigits_offset)

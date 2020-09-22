@@ -6,3 +6,4 @@ from .Plotting import plot_dict_with_date_keys
 from .Plotting import summary_plot_global_ts
 from .Plotting import summary_plot_histogram
 from .Plotting import summary_plot_maps
+from .Plotting import trend_plot
