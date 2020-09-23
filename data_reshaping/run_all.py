@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# sbatch pop.h.nday1_t13.sh 004 0001
 import os
 
 
