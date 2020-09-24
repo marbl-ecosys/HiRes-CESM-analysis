@@ -62,6 +62,14 @@ def _parse_args():
         help="If true, do not actually submit job",
     )
 
+    # Optional: By default, slurm will email users when jobs start and finish
+    parser.add_argument(
+        "--no-mail",
+        action="store_false",
+        dest="send_mail",
+        help="If true, send SLURM emails to {user}@ucar.edu",
+    )
+
     return parser.parse_args()
 
 
@@ -70,14 +78,22 @@ def _parse_args():
 if __name__ == "__main__":
     args = _parse_args()
     case = args.case
+    mail_opt = (
+        f"--mail-type=ALL --mail-user={os.environ['USER']}@ucar.edu"
+        if args.send_mail
+        else "--mail-type=NONE"
+    )
 
     for yr in args.years:
         year = f"{yr:04}"
         for script in args.scripts:
             print(f"Submitting {script} for year {year} of {case}...")
+            cmd = f"sbatch {mail_opt} --dependency=singleton {script} {case} {year}"
             if not args.dryrun:
                 # note: the --dependency=singleton option means only one job per job name
                 #       Some jobs had been crashing, and I think it was due to temporary
                 #       files clobbering each other? But only having one pop.h_t13.sh job
                 #       at a time seems to have prevented these issues.
-                os.system(f"sbatch --dependency=singleton {script} {case} {year}")
+                os.system(cmd)
+            else:
+                print(f"Command to run: {cmd}")

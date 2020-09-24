@@ -10,8 +10,6 @@
 #SBATCH --mem 100G
 #SBATCH -e logs/Pop.h.nday1_t13.err.%J
 #SBATCH -o logs/Pop.h.nday1_t13.out.%J
-#SBATCH --mail-type=ALL
-#SBATCH --mail-user=mlevy@ucar.edu
 #SBATCH -m block
 #
 module purge
