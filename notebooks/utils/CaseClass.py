@@ -13,6 +13,7 @@ import yaml
 from .config import (
     add_first_date_and_reformat,
     get_archive_log_dir,
+    get_campaign_popseries_dir,
     get_archive_pophist_dir,
     get_rundir,
 )
@@ -32,6 +33,7 @@ class CaseClass(object):
         self._casenames = casenames
         self._verbose = verbose
         self._log_filenames = self._find_log_files()
+        self._timeseries_filenames = self._find_timeseries_files()
         self._history_filenames = self._find_hist_files()
 
         self.log_contents = dict()
@@ -74,6 +76,30 @@ class CaseClass(object):
                     files[component] += glob.glob(
                         os.path.join(rootdir(casename), f"{component}.log.*")
                     )
+        return files
+
+    ############################################################################
+
+    def _find_timeseries_files(self):
+        """
+        Look in campaign_dir for pop history files
+        """
+        files = dict()
+        subdirs = dict()
+        subdirs["pop.h"] = "month_1"
+        subdirs["pop.h.nday1"] = "day_1"
+        subdirs["pop.h.nyear1"] = "year_1"
+        for stream in ["pop.h", "pop.h.nday1"]:
+            files[stream] = []
+            for casename in self._casenames:
+                files[stream] += glob.glob(
+                    os.path.join(
+                        get_campaign_popseries_dir(casename),
+                        subdirs[stream],
+                        f"{casename}.{stream}.*.nc",
+                    )
+                )
+            files[stream].sort()
         return files
 
     ############################################################################
