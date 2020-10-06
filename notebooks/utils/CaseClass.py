@@ -7,7 +7,6 @@ import os
 import gzip as gz
 import numpy as np
 import xarray as xr
-import yaml
 
 # local modules, not available through __init__
 from .config import (
