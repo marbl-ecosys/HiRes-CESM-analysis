@@ -202,7 +202,9 @@ class CaseClass(object):
 
     ############################################################################
 
-    def gen_dataset(self, varnames, stream, start_date=None, end_date=None, **kwargs):
+    def gen_dataset(
+        self, varnames, stream, start_year=1, end_year=61, verbose=False, **kwargs
+    ):
         """
         Open all history files from a specified stream. Returns a dict where keys
         are stream names and values are xarray Datasets
@@ -210,32 +212,10 @@ class CaseClass(object):
         Pared-down API for working with intake-esm catalog.
         Users familiar with intake-esm may prefer self.get_catalog() and then querying directly.
         """
-        if stream not in self._history_filenames:
-            raise ValueError(f"No known {stream} files")
-
         if type(varnames) == str:
             varnames = [varnames]
         if type(varnames) != list:
             raise ValueError(f"{casenames} is not a string or list")
-
-        # Pare down file list
-        first = 0
-        if start_date:
-            try:
-                first = [
-                    start_date in name for name in self._history_filenames[stream]
-                ].index(True)
-            except:
-                print(f"{start_date} not found, using first file")
-        last = len(self._history_filenames[stream])
-        if end_date:
-            try:
-                last = [
-                    end_date in name for name in self._history_filenames[stream]
-                ].index(True) + 1
-            except:
-                print(f"{end_date} not found, using last file")
-        history_filenames = self._history_filenames[stream][first:last]
 
         # Set some defaults to pass to open_mfdataset, then apply kwargs argument
         default_kwargs = dict()
@@ -246,11 +226,63 @@ class CaseClass(object):
         # coords="minimal", because coords cannot be default="different" if compat="override"
         default_kwargs["coords"] = "minimal"
 
-        default_kwargs.update(kwargs)
-        ds_tmp = xr.open_mfdataset(history_filenames, **default_kwargs,)
-
+        # Make sure these variables are kept in all datasets
         _vars_to_keep = ["time_bound", "TAREA"]
-        ds = time_set_mid(ds_tmp[varnames + _vars_to_keep], "time")
+
+        default_kwargs.update(kwargs)
+
+        # Pare down time series file list (only contains years and variables we are interested in)
+        ds_timeseries = None
+        timeseries_filenames = []
+        for var in varnames:
+            for year in range(start_year, end_year + 1):
+                timeseries_filenames += [
+                    filename
+                    for filename in self._timeseries_filenames[stream]
+                    if f".{var}." in filename and f".{year:04}" in filename
+                ]
+
+        if timeseries_filenames:
+            ds_timeseries = time_set_mid(
+                xr.open_mfdataset(timeseries_filenames, **default_kwargs,)[
+                    varnames + _vars_to_keep
+                ],
+                "time",
+            )
+            tb = ds_timeseries["time_bound"]
+            if tb.dtype == np.dtype("O"):
+                start_year = int(tb.values[-1, 1].strftime("%Y"))
+
+        # Pare down history file list
+        ds_history = None
+        history_filenames = []
+        for year in range(start_year, end_year + 1):
+            history_filenames += [
+                filename
+                for filename in self._history_filenames[stream]
+                if f".{year:04}" in filename
+            ]
+
+        if history_filenames:
+            ds_history = time_set_mid(
+                xr.open_mfdataset(history_filenames, **default_kwargs,)[
+                    varnames + _vars_to_keep
+                ],
+                "time",
+            )
+
+        if not (ds_history or ds_timeseries):
+            raise ValueError(
+                f"Can not find requested variables between {start_year:04} and {end_year:04}"
+            )
+        elif ds_history and ds_timeseries:
+            print(
+                f'Time series ends at {ds_timeseries["time_bound"].values[-1,1]}, history files begin at {ds_history["time_bound"].values[0,0]}'
+            )
+            ds = xr.concat([ds_timeseries, ds_history], dim="time")
+        else:
+            ds = ds_history or ds_timeseries
+
         print(f'Datasets contain a total of {ds.sizes["time"]} time samples')
         tb_name = ds["time"].attrs["bounds"]
         print(f"Last average written at {ds[tb_name].values[-1, 1]}")
