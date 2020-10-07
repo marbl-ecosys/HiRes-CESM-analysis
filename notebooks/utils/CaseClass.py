@@ -217,37 +217,47 @@ class CaseClass(object):
             raise ValueError(f"{casenames} is not a string or list")
 
         # Set some defaults to pass to open_mfdataset, then apply kwargs argument
-        default_kwargs = dict()
+        open_mfdataset_kwargs = dict()
         # data_vars="minimal", to avoid introducing time dimension to time-invariant fields
-        default_kwargs["data_vars"] = "minimal"
+        open_mfdataset_kwargs["data_vars"] = "minimal"
         # compat="override", to skip var consistency checks (for speed)
-        default_kwargs["compat"] = "override"
+        open_mfdataset_kwargs["compat"] = "override"
         # coords="minimal", because coords cannot be default="different" if compat="override"
-        default_kwargs["coords"] = "minimal"
+        open_mfdataset_kwargs["coords"] = "minimal"
+        #  parallel=True to open files in parallel
+        open_mfdataset_kwargs["parallel"] = True
+        open_mfdataset_kwargs.update(kwargs)
+
+        # Pull specific keys from open_mfdataset_kwargs to pass to xr.concat
+        concat_keys = ["data_vars", "compat", "coords"]
+        concat_kwargs = {
+            key: value
+            for key, value in open_mfdataset_kwargs.items()
+            if key in concat_keys
+        }
 
         # Make sure these variables are kept in all datasets
         _vars_to_keep = ["time_bound", "TAREA"]
 
-        default_kwargs.update(kwargs)
-
         # Pare down time series file list (only contains years and variables we are interested in)
-        ds_timeseries = None
-        timeseries_filenames = []
-        for var in varnames:
+        ds_timeseries = []
+        for varname in varnames:
+            timeseries_filenames = []
             for year in range(start_year, end_year + 1):
                 timeseries_filenames += [
                     filename
                     for filename in self._timeseries_filenames[stream]
-                    if f".{var}." in filename and f".{year:04}" in filename
+                    if f".{varname}." in filename and f".{year:04}" in filename
                 ]
 
-        if timeseries_filenames:
-            ds_timeseries = time_set_mid(
-                xr.open_mfdataset(timeseries_filenames, **default_kwargs,)[
-                    varnames + _vars_to_keep
-                ],
-                "time",
-            )
+            if timeseries_filenames:
+                ds_timeseries.append(
+                    xr.open_mfdataset(timeseries_filenames, **open_mfdataset_kwargs,)[
+                        [varname] + _vars_to_keep
+                    ]
+                )
+        if ds_timeseries:
+            ds_timeseries = xr.merge(ds_timeseries)
             tb = ds_timeseries["time_bound"]
             if tb.dtype == np.dtype("O"):
                 start_year = int(tb.values[-1, 1].strftime("%Y"))
@@ -263,12 +273,9 @@ class CaseClass(object):
             ]
 
         if history_filenames:
-            ds_history = time_set_mid(
-                xr.open_mfdataset(history_filenames, **default_kwargs,)[
-                    varnames + _vars_to_keep
-                ],
-                "time",
-            )
+            ds_history = xr.open_mfdataset(history_filenames, **open_mfdataset_kwargs,)[
+                varnames + _vars_to_keep
+            ]
 
         if not (ds_history or ds_timeseries):
             raise ValueError(
@@ -278,9 +285,11 @@ class CaseClass(object):
             print(
                 f'Time series ends at {ds_timeseries["time_bound"].values[-1,1]}, history files begin at {ds_history["time_bound"].values[0,0]}'
             )
-            ds = xr.concat([ds_timeseries, ds_history], dim="time")
+            ds = xr.concat([ds_timeseries, ds_history], dim="time", **concat_kwargs)
         else:
             ds = ds_history or ds_timeseries
+
+        ds = time_set_mid(ds, "time")
 
         print(f'Datasets contain a total of {ds.sizes["time"]} time samples')
         tb_name = ds["time"].attrs["bounds"]
