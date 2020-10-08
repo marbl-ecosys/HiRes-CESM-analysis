@@ -240,7 +240,7 @@ class CaseClass(object):
         _vars_to_keep = ["time_bound", "TAREA"]
 
         # Pare down time series file list (only contains years and variables we are interested in)
-        ds_timeseries = []
+        ds_timeseries_per_var = []
         for varname in varnames:
             timeseries_filenames = []
             for year in range(start_year, end_year + 1):
@@ -251,19 +251,19 @@ class CaseClass(object):
                 ]
 
             if timeseries_filenames:
-                ds_timeseries.append(
+                ds_timeseries_per_var.append(
                     xr.open_mfdataset(timeseries_filenames, **open_mfdataset_kwargs,)[
                         [varname] + _vars_to_keep
                     ]
                 )
-        if ds_timeseries:
-            ds_timeseries = xr.merge(ds_timeseries)
-            tb = ds_timeseries["time_bound"]
+        if ds_timeseries_per_var:
+            ds_timeseries = xr.merge(ds_timeseries_per_var)
+            tb_name_ts = ds_timeseries["time"].attrs["bounds"]
+            tb = ds_timeseries[tb_name_ts]
             if tb.dtype == np.dtype("O"):
                 start_year = int(tb.values[-1, 1].strftime("%Y"))
 
         # Pare down history file list
-        ds_history = None
         history_filenames = []
         for year in range(start_year, end_year + 1):
             history_filenames += [
@@ -277,17 +277,22 @@ class CaseClass(object):
                 varnames + _vars_to_keep
             ]
 
-        if not (ds_history or ds_timeseries):
-            raise ValueError(
-                f"Can not find requested variables between {start_year:04} and {end_year:04}"
-            )
-        elif ds_history and ds_timeseries:
-            print(
-                f'Time series ends at {ds_timeseries["time_bound"].values[-1,1]}, history files begin at {ds_history["time_bound"].values[0,0]}'
-            )
-            ds = xr.concat([ds_timeseries, ds_history], dim="time", **concat_kwargs)
+        # Concatenate discovered datasets
+        if ds_timeseries_per_var:
+            if history_filenames:
+                print(
+                    f'Time series ends at {ds_timeseries["time_bound"].values[-1,1]}, history files begin at {ds_history["time_bound"].values[0,0]}'
+                )
+                ds = xr.concat([ds_timeseries, ds_history], dim="time", **concat_kwargs)
+            else:
+                ds = ds_timeseries
         else:
-            ds = ds_history or ds_timeseries
+            if history_filenames:
+                ds = ds_history
+            else:
+                raise ValueError(
+                    f"Can not find requested variables between {start_year:04} and {end_year:04}"
+                )
 
         ds = time_set_mid(ds, "time")
 

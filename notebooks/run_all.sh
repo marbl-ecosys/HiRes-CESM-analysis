@@ -39,6 +39,9 @@ EOF
 # not sure why conda activate doesn't work but source activate does...
 set_env="export PATH=/glade/work/mlevy/miniconda3/bin/:$PATH ; source activate hires-marbl || exit -1"
 
+# make sure log directory exists
+mkdir -p logs
+
 for notebook in Sanity\ Check
 do
   submit_slurm_script
