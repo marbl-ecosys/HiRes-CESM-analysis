@@ -92,3 +92,11 @@ def round_sig(x, ndigits):
         return x
     ndigits_offset = math.floor(math.log10(abs(x)))
     return round(x, ndigits - 1 - ndigits_offset)
+
+
+def get_varnames_from_metadata_list(diag_metadata_list):
+    varnames = []
+    for diag_metadata in diag_metadata_list:
+        if diag_metadata["varname"] not in varnames:
+            varnames.append(diag_metadata["varname"])
+    return varnames

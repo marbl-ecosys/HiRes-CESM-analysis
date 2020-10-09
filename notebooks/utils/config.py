@@ -14,6 +14,29 @@ def get_rundir(casename):
 ################################################################################
 
 
+def get_campaign_popseries_dir(casename):
+    freq_name = dict()
+    return os.path.join(
+        os.sep,
+        "glade",
+        "campaign",
+        "cesm",
+        "development",
+        "bgcwg",
+        "projects",
+        "hi-res_JRA",
+        "cases",
+        casename,
+        "output",
+        "ocn",
+        "proc",
+        "tseries",
+    )
+
+
+################################################################################
+
+
 def get_archive_pophist_dir(casename):
     return os.path.join(
         os.sep, "glade", "scratch", user, "archive", casename, "ocn", "hist"
