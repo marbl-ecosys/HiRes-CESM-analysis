@@ -5,6 +5,7 @@
 import glob
 import os
 import gzip as gz
+import cftime
 import numpy as np
 import xarray as xr
 
@@ -72,8 +73,8 @@ class CaseClass(object):
             files[component] = []
             for rootdir in [get_archive_log_dir, get_rundir]:
                 for casename in self._casenames:
-                    files[component] += glob.glob(
-                        os.path.join(rootdir(casename), f"{component}.log.*")
+                    files[component].extend(
+                        glob.glob(os.path.join(rootdir(casename), f"{component}.log.*"))
                     )
         return files
 
@@ -81,21 +82,23 @@ class CaseClass(object):
 
     def _find_timeseries_files(self):
         """
-        Look in campaign_dir for pop history files
+        Look in campaign_dir for pop time series files
         """
         files = dict()
         subdirs = dict()
         subdirs["pop.h"] = "month_1"
         subdirs["pop.h.nday1"] = "day_1"
         subdirs["pop.h.nyear1"] = "year_1"
-        for stream in ["pop.h", "pop.h.nday1"]:
+        for stream in ["pop.h", "pop.h.nday1", "pop.h.nyear1"]:
             files[stream] = []
             for casename in self._casenames:
-                files[stream] += glob.glob(
-                    os.path.join(
-                        get_campaign_popseries_dir(casename),
-                        subdirs[stream],
-                        f"{casename}.{stream}.*.nc",
+                files[stream].extend(
+                    glob.glob(
+                        os.path.join(
+                            get_campaign_popseries_dir(casename),
+                            subdirs[stream],
+                            f"{casename}.{stream}.*.nc",
+                        )
                     )
                 )
             files[stream].sort()
@@ -112,8 +115,12 @@ class CaseClass(object):
             files[stream] = []
             for rootdir in [get_archive_pophist_dir, get_rundir]:
                 for casename in self._casenames:
-                    files[stream] += glob.glob(
-                        os.path.join(rootdir(casename), f"{casename}.{stream}.0*.nc")
+                    files[stream].extend(
+                        glob.glob(
+                            os.path.join(
+                                rootdir(casename), f"{casename}.{stream}.0*.nc"
+                            )
+                        )
                     )
             files[stream].sort()
         return files
@@ -251,11 +258,13 @@ class CaseClass(object):
         for varname in varnames:
             timeseries_filenames = []
             for year in range(start_year, end_year + 1):
-                timeseries_filenames += [
-                    filename
-                    for filename in self._timeseries_filenames[stream]
-                    if f".{varname}." in filename and f".{year:04}" in filename
-                ]
+                timeseries_filenames.extend(
+                    [
+                        filename
+                        for filename in self._timeseries_filenames[stream]
+                        if f".{varname}." in filename and f".{year:04}" in filename
+                    ]
+                )
 
             if timeseries_filenames:
                 ds_timeseries_per_var.append(
@@ -269,15 +278,28 @@ class CaseClass(object):
             tb = ds_timeseries[tb_name_ts]
             if tb.dtype == np.dtype("O"):
                 start_year = int(tb.values[-1, 1].strftime("%Y"))
+            else:
+                # NOTE: this block will be used if decode_times=False in open_mfdataset()
+                #       If decode_times=False because cftime can not decode the time dimension,
+                #       then this will likely fail and we'll need a better way to determine
+                #       the last year read from time series. Maybe pull from filenames?
+                decoded_tb = cftime.num2date(
+                    tb.values[-1, 1],
+                    tb.attrs["units"],
+                    calendar=ds_timeseries["time"].attrs["calendar"],
+                )
+                start_year = int(decoded_tb.strftime("%Y"))
 
         # Pare down history file list
         history_filenames = []
         for year in range(start_year, end_year + 1):
-            history_filenames += [
-                filename
-                for filename in self._history_filenames[stream]
-                if f".{year:04}" in filename
-            ]
+            history_filenames.extend(
+                [
+                    filename
+                    for filename in self._history_filenames[stream]
+                    if f".{year:04}" in filename
+                ]
+            )
 
         if history_filenames:
             ds_history = xr.open_mfdataset(history_filenames, **open_mfdataset_kwargs,)[
