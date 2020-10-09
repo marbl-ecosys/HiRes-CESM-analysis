@@ -42,10 +42,24 @@ set_env="export PATH=/glade/work/mlevy/miniconda3/bin/:$PATH ; source activate h
 # make sure log directory exists
 mkdir -p logs
 
+# Sanity Check
 for notebook in Sanity\ Check
 do
   submit_slurm_script
 done
+
+# Notebooks that act on range of years
+for case in 003 004
+do
+  # For now, plot_suite and trend_maps don't run with nbconvert
+  # It may be NCAR_jobqueue related...
+  for notebook in compare_ts_and_hist_${case} # $ plot_suite_${case} trend_maps_${case}
+  do
+    submit_slurm_script
+  done
+done
+
+# per-year notebooks
 for case in 003 004
 do
   for yr in {1..61}
@@ -59,9 +73,4 @@ do
       submit_slurm_script
     done
   done
-  # For now, these don't run with nbconvert (maybe NCAR_jobqueue related?
-#  for notebook in plot_suite_${case} trend_maps_${case}
-#  do
-#    submit_slurm_script
-#  done
 done

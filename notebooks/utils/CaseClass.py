@@ -202,7 +202,14 @@ class CaseClass(object):
     ############################################################################
 
     def gen_dataset(
-        self, varnames, stream, start_year=1, end_year=61, verbose=False, **kwargs
+        self,
+        varnames,
+        stream,
+        start_year=1,
+        end_year=61,
+        quiet=False,
+        verbose=False,
+        **kwargs,
     ):
         """
         Open all history files from a specified stream. Returns a dict where keys
@@ -296,7 +303,9 @@ class CaseClass(object):
 
         ds = time_set_mid(ds, "time")
 
-        print(f'Datasets contain a total of {ds.sizes["time"]} time samples')
+        if not quiet:
+            print(f'Datasets contain a total of {ds.sizes["time"]} time samples')
         tb_name = ds["time"].attrs["bounds"]
-        print(f"Last average written at {ds[tb_name].values[-1, 1]}")
+        if not quiet:
+            print(f"Last average written at {ds[tb_name].values[-1, 1]}")
         return ds
