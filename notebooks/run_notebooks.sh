@@ -7,6 +7,9 @@ usage () {
   echo "For each specified file, the full call is:"
   echo "jupyter nbconvert --to notebook --inplace --ExecutePreprocessor.kernel_name=python \\
                   --ExecutePreprocessor.timeout=3600 --execute NOTEBOOK"
+  echo ""
+  echo "Output from the slurm job is written in the logs/ directory,"
+  echo "which will be created if it does not exist."
 }
 
 #########################
