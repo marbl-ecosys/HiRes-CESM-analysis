@@ -1,12 +1,12 @@
 #!/bin/bash
 
 usage () {
-  echo "$0 notebook [notebook2 ... notebookN]"
+  echo "$0 NOTEBOOK [NOTEBOOK2 ... NOTEBOOKN]"
   echo "Submit job(s) to run all notebooks on casper node via jupyter nbconvert"
   echo ""
-  echo "Full call is:"
+  echo "For each specified file, the full call is:"
   echo "jupyter nbconvert --to notebook --inplace --ExecutePreprocessor.kernel_name=python \\
-                  --ExecutePreprocessor.timeout=3600 --execute \"${notebook}.ipynb\""
+                  --ExecutePreprocessor.timeout=3600 --execute NOTEBOOK"
 }
 
 #########################
@@ -53,7 +53,7 @@ fi
 
 for args in "$@"
 do
-  if [ "$args" == "-h" ]; then
+  if [ "$args" == "-h" ] || [ "$args" == "--help" ]; then
     usage
     exit 0
   fi
@@ -67,6 +67,10 @@ mkdir -p logs
 
 for notebook_full in "$@"
 do
+  if [ ! -f "${notebook_full}" ]; then
+    echo "WARNING: can not find ${notebook_full}"
+    continue
+  fi
   notebook=`echo ${notebook_full} | cut -d '.' -f 1`
   submit_slurm_script $notebook
 done
