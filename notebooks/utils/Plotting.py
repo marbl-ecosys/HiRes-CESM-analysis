@@ -14,28 +14,23 @@ from .utils_units import conv_units
 ################################################################################
 
 
-def compare_fields_at_lat_lon(
-    list_of_cases, varname, stream, nlat, nlon, individual_plots=False
-):
-    _check_for_var_in_case(list_of_cases, varname, stream)
-
-    list_of_das = []
-    for case in list_of_cases:
-        list_of_das.append(
-            _extract_field_from_file(case.history_contents[stream], varname, nlat, nlon)
-        )
+def compare_fields_at_lat_lon(list_of_das_in, nlat, nlon, individual_plots=False):
 
     # This shouldn't be hard-coded... but how else to get?
     xticks = 365 + np.array([0, 31, 59, 90, 120, 151])
     xlabels = ["Jan 1", "Feb 1", "Mar 1", "Apr 1", "May 1", "June 1"]
     yticks = np.linspace(0, 17e4, 18)
 
+    list_of_das = []
+    for da in list_of_das_in:
+        list_of_das.append(da.isel(nlat=nlat, nlon=nlon).compute())
+
     # Get longitude and latitude (hard-coded to assume we want W and S)
     long_west = 360 - list_of_das[0]["TLONG"].data
     lat_south = -list_of_das[0]["TLAT"].data
 
     if individual_plots:
-        nrows = int(np.ceil(len(list_of_cases) / 2))
+        nrows = int(np.ceil(len(list_of_das) / 2))
         fig, axes = plt.subplots(
             nrows=nrows, ncols=2, figsize=(9 * nrows, 10.5), sharex=True
         )
@@ -114,15 +109,6 @@ def plot_dict_with_date_keys(dict_in, title, legend=None):
 
 
 #     return fig
-
-################################################################################
-
-
-def _check_for_var_in_case(list_of_cases, varname, stream):
-    for case in list_of_cases:
-        if varname not in case.history_contents[stream]:
-            raise ValueError(f"Not all datasets contain {varname}")
-
 
 ################################################################################
 
