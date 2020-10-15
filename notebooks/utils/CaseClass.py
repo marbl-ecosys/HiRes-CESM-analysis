@@ -35,6 +35,8 @@ class CaseClass(object):
         self._log_filenames = self._find_log_files()
         self._timeseries_filenames = self._find_timeseries_files()
         self._history_filenames = self._find_hist_files()
+        self._dataset_files = dict()
+        self._dataset_src = dict()
 
         self.log_contents = dict()
 
@@ -208,6 +210,32 @@ class CaseClass(object):
 
     ############################################################################
 
+    def get_dataset_source(self, stream, year, varname):
+        data_not_found = "no data"
+
+        # Does _dataset_src[stream] exist?
+        if stream not in self._dataset_src:
+            print(f"No datasets have been returned from {stream}")
+            return data_not_found
+
+        # Does _dataset_src[stream][year] exist?
+        if year not in self._dataset_src[stream]:
+            print(
+                f"No datasets covering year {year:04} have been returned from {stream}"
+            )
+            return data_not_found
+
+        # Does _dataset_src[stream][year][varname] exist?
+        if varname not in self._dataset_src[stream][year]:
+            print(
+                f"No dataset containing {varname} from year {year:04} have been returned from {stream}"
+            )
+            return data_not_found
+
+        return self._dataset_src[stream][year][varname]
+
+    ############################################################################
+
     def gen_dataset(
         self,
         varnames,
@@ -229,6 +257,10 @@ class CaseClass(object):
             varnames = [varnames]
         if type(varnames) != list:
             raise ValueError(f"{casenames} is not a string or list")
+
+        if stream not in self._dataset_files:
+            self._dataset_files[stream] = dict()
+            self._dataset_src[stream] = dict()
 
         # Set some defaults to pass to open_mfdataset, then apply kwargs argument
         open_mfdataset_kwargs = dict()
@@ -258,13 +290,16 @@ class CaseClass(object):
         for varname in varnames:
             timeseries_filenames = []
             for year in range(start_year, end_year + 1):
-                timeseries_filenames.extend(
-                    [
-                        filename
-                        for filename in self._timeseries_filenames[stream]
-                        if f".{varname}." in filename and f".{year:04}" in filename
-                    ]
-                )
+                if year not in self._dataset_files[stream]:
+                    self._dataset_files[stream][year] = dict()
+                    self._dataset_src[stream][year] = dict()
+                self._dataset_files[stream][year][varname] = [
+                    filename
+                    for filename in self._timeseries_filenames[stream]
+                    if f".{varname}." in filename and f".{year:04}" in filename
+                ]
+                self._dataset_src[stream][year][varname] = "time series"
+                timeseries_filenames.extend(self._dataset_files[stream][year][varname])
 
             if timeseries_filenames:
                 ds_timeseries_per_var.append(
@@ -293,13 +328,16 @@ class CaseClass(object):
         # Pare down history file list
         history_filenames = []
         for year in range(start_year, end_year + 1):
-            history_filenames.extend(
-                [
-                    filename
-                    for filename in self._history_filenames[stream]
-                    if f".{year:04}" in filename
-                ]
-            )
+            if year not in self._dataset_files[stream]:
+                self._dataset_files[stream][year] = dict()
+                self._dataset_src[stream][year] = dict()
+            self._dataset_files[stream][year][varname] = [
+                filename
+                for filename in self._history_filenames[stream]
+                if f".{year:04}" in filename
+            ]
+            history_filenames.extend(self._dataset_files[stream][year][varname])
+            self._dataset_src[stream][year][varname] = "hist"
 
         if history_filenames:
             ds_history = xr.open_mfdataset(history_filenames, **open_mfdataset_kwargs,)[
