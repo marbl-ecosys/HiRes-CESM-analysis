@@ -16,8 +16,9 @@ module purge
 conda deactivate || echo "conda not loaded"
 #
 # PARSE COMMAND LINE ARGUMENTS
-CASE=g.e22.G1850ECO_JRA_HR.TL319_t13.${1} ; export CASE
-YEAR=${2}
+CASE=${1} ; export CASE
+ARCHIVE_ROOT=${2}
+YEAR=${3}
 echo "Reshaping year ${YEAR} for ${CASE}..."
 #
 cd /glade/p/cesm/postprocessing_dav/cesm-env2/bin
@@ -39,7 +40,7 @@ NCKS=`which ncks`  ; export NCKS
 PROCHOST=`hostname`;export PROCHOST
 #
 BASEDIR=/glade/u/home/strandwg/CCP_Processing_Suite
-LOCALDSK=/glade/scratch/mlevy/archive/${CASE} ; export LOCALDSK
+LOCALDSK=${ARCHIVE_ROOT}/${CASE} ; export LOCALDSK
 PROCBASE=/glade/scratch/$USER/T13/${CASE}     ; export PROCBASE
 #
 HTYP=`echo $HIST | cut -d'.' -f1` ; export HTYP

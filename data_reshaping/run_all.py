@@ -25,14 +25,29 @@ def _parse_args():
     )
 
     # Optional: which case to convert
+    #           if this tool is made public, drop the default and require case as well
     parser.add_argument(
         "-c",
         "--case",
         action="store",
         dest="case",
         type=str,
-        default="004",
+        default="g.e22.G1850ECO_JRA_HR.TL319_t13.004",
         help="Suffix of case to convert to time series",
+    )
+
+    # Optional: location of DOUT_S_ROOT
+    archive_default = os.path.join(
+        os.sep, "glade", "scratch", os.environ["USER"], "archive"
+    )
+    parser.add_argument(
+        "-a",
+        "--archive-root",
+        action="store",
+        dest="archive_root",
+        type=str,
+        default=archive_default,
+        help="base of DOUT_S_ROOT",
     )
 
     # Optional: specify which scripts to run
@@ -78,6 +93,7 @@ def _parse_args():
 if __name__ == "__main__":
     args = _parse_args()
     case = args.case
+    archive_root = args.archive_root
     mail_opt = (
         f"--mail-type=ALL --mail-user={os.environ['USER']}@ucar.edu"
         if args.send_mail
@@ -88,7 +104,7 @@ if __name__ == "__main__":
         year = f"{yr:04}"
         for script in args.scripts:
             print(f"Submitting {script} for year {year} of {case}...")
-            cmd = f"sbatch {mail_opt} --dependency=singleton {script} {case} {year}"
+            cmd = f"sbatch {mail_opt} --dependency=singleton {script} {case} {archive_root} {year}"
             if not args.dryrun:
                 # note: the --dependency=singleton option means only one job per job name
                 #       Some jobs had been crashing, and I think it was due to temporary
