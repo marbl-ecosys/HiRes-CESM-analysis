@@ -211,26 +211,25 @@ class CaseClass(object):
     ############################################################################
 
     def get_dataset_source(self, stream, year, varname):
-        data_not_found = "no data"
 
         # Does _dataset_src[stream] exist?
         if stream not in self._dataset_src:
             print(f"No datasets have been returned from {stream}")
-            return data_not_found
+            return None
 
         # Does _dataset_src[stream][year] exist?
         if year not in self._dataset_src[stream]:
             print(
                 f"No datasets covering year {year:04} have been returned from {stream}"
             )
-            return data_not_found
+            return None
 
         # Does _dataset_src[stream][year][varname] exist?
         if varname not in self._dataset_src[stream][year]:
             print(
                 f"No dataset containing {varname} from year {year:04} have been returned from {stream}"
             )
-            return data_not_found
+            return None
 
         return self._dataset_src[stream][year][varname]
 

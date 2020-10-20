@@ -8,3 +8,4 @@ from .Plotting import summary_plot_histogram
 from .Plotting import summary_plot_maps
 from .Plotting import trend_plot
 from .utils import get_varnames_from_metadata_list
+from .compare_ts_and_hist import compare_ts_and_hist
