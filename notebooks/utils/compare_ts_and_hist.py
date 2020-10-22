@@ -29,7 +29,7 @@ def compare_ts_and_hist(
 
     found_all = True
 
-    case = CaseClass.CaseClass(casename)
+    case = CaseClass(casename)
     # Return if no time series is available
     if len(case.get_timeseries_files(year, stream)) == 0:
         return "no time series"
