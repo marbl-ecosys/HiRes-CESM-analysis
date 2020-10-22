@@ -6,7 +6,6 @@ import cftime
 import numpy as np
 import xarray as xr
 
-from . import CaseClass
 from .compare_ts_and_hist import compare_ts_and_hist
 
 
@@ -106,7 +105,6 @@ def get_varnames_from_metadata_list(diag_metadata_list):
 
 
 def timeseries_and_history_comparison(casename):
-    case = CaseClass(casename)
     for year in range(1, 62):
         has_ts = True
         found_all = True

@@ -4,8 +4,7 @@ A script to verify that converting from history files to time series worked as e
 """
 
 import xarray as xr
-
-from .CaseClass import CaseClass
+from . import CaseClass
 
 
 def compare_ts_and_hist(
@@ -30,7 +29,7 @@ def compare_ts_and_hist(
 
     found_all = True
 
-    case = CaseClass(casename)
+    case = CaseClass.CaseClass(casename)
     # Return if no time series is available
     if len(case.get_timeseries_files(year, stream)) == 0:
         return "no time series"

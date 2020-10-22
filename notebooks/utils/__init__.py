@@ -9,4 +9,3 @@ from .Plotting import summary_plot_maps
 from .Plotting import trend_plot
 from .utils import get_varnames_from_metadata_list
 from .utils import timeseries_and_history_comparison
-from .compare_ts_and_hist import compare_ts_and_hist
