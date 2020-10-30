@@ -6,6 +6,8 @@ import cftime
 import numpy as np
 import xarray as xr
 
+from .compare_ts_and_hist import compare_ts_and_hist
+
 
 def repl_coord(coordname, ds1, ds2):
     """
@@ -103,10 +105,6 @@ def get_varnames_from_metadata_list(diag_metadata_list):
 
 
 def timeseries_and_history_comparison(casename):
-    # import here to avoid "ValueError: attempted relative import beyond top-level package"
-    # when Github Action calls "import utils" (no issue in notebooks)
-    from .compare_ts_and_hist import compare_ts_and_hist
-
     for year in range(1, 62):
         has_ts = True
         found_all = True
