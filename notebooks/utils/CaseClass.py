@@ -14,7 +14,9 @@ from .config import (
     add_first_date_and_reformat,
     get_archive_log_dir,
     get_campaign_popseries_dir,
+    get_campaign_ciceseries_dir,
     get_archive_pophist_dir,
+    get_archive_cicehist_dir,
     get_rundir,
 )
 from .utils import time_set_mid
@@ -35,6 +37,8 @@ class CaseClass(object):
         self._log_filenames = self._find_log_files()
         self._timeseries_filenames = self._find_timeseries_files()
         self._history_filenames = self._find_hist_files()
+        self._dataset_files = dict()
+        self._dataset_src = dict()
 
         self.log_contents = dict()
 
@@ -64,6 +68,48 @@ class CaseClass(object):
 
     ############################################################################
 
+    def _get_single_year_timeseries_files(self, year, stream, varname=None):
+        var_check = True
+        timeseries_filenames = []
+        for filename in self._timeseries_filenames[stream]:
+            if varname is not None:
+                var_check = f".{varname}." in filename
+            if var_check and f".{year:04}" in filename:
+                timeseries_filenames.extend([filename])
+        return timeseries_filenames
+
+    ############################################################################
+
+    def get_timeseries_files(self, year, stream, varnames=None):
+        if type(varnames) == str:
+            varnames = [varnames]
+        if not (type(varnames) == list or varnames is None):
+            raise ValueError(
+                f"varnames = {varnames} which is not None, a string, or a list"
+            )
+
+        timeseries_filenames = []
+        if varnames:
+            for varname in varnames:
+                timeseries_filenames.extend(
+                    self._get_single_year_timeseries_files(year, stream, varname)
+                )
+        else:
+            timeseries_filenames = self._get_single_year_timeseries_files(year, stream)
+
+        return timeseries_filenames
+
+    ############################################################################
+
+    def get_history_files(self, year, stream):
+        return [
+            filename
+            for filename in self._history_filenames[stream]
+            if f".{year:04}" in filename
+        ]
+
+    ############################################################################
+
     def _find_log_files(self):
         """
         Look in rundir and archive for cesm.log, ocn.log, and cpl.log files
@@ -89,6 +135,8 @@ class CaseClass(object):
         subdirs["pop.h"] = "month_1"
         subdirs["pop.h.nday1"] = "day_1"
         subdirs["pop.h.nyear1"] = "year_1"
+        subdirs["cice.h"] = "month_1"
+        subdirs["cice.h1"] = "day_1"
         for stream in ["pop.h", "pop.h.nday1", "pop.h.nyear1"]:
             files[stream] = []
             for casename in self._casenames:
@@ -96,6 +144,19 @@ class CaseClass(object):
                     glob.glob(
                         os.path.join(
                             get_campaign_popseries_dir(casename),
+                            subdirs[stream],
+                            f"{casename}.{stream}.*.nc",
+                        )
+                    )
+                )
+            files[stream].sort()
+        for stream in ["cice.h", "cice.h1"]:
+            files[stream] = []
+            for casename in self._casenames:
+                files[stream].extend(
+                    glob.glob(
+                        os.path.join(
+                            get_campaign_ciceseries_dir(casename),
                             subdirs[stream],
                             f"{casename}.{stream}.*.nc",
                         )
@@ -111,9 +172,21 @@ class CaseClass(object):
         Look in rundir and archive for pop history files
         """
         files = dict()
-        for stream in ["pop.h", "pop.h.nday1"]:
+        for stream in ["pop.h", "pop.h.nday1", "pop.h.nyear1"]:
             files[stream] = []
             for rootdir in [get_archive_pophist_dir, get_rundir]:
+                for casename in self._casenames:
+                    files[stream].extend(
+                        glob.glob(
+                            os.path.join(
+                                rootdir(casename), f"{casename}.{stream}.0*.nc"
+                            )
+                        )
+                    )
+            files[stream].sort()
+        for stream in ["cice.h", "cice.h1"]:
+            files[stream] = []
+            for rootdir in [get_archive_cicehist_dir, get_rundir]:
                 for casename in self._casenames:
                     files[stream].extend(
                         glob.glob(
@@ -208,6 +281,31 @@ class CaseClass(object):
 
     ############################################################################
 
+    def get_dataset_source(self, stream, year, varname):
+
+        # Does _dataset_src[stream] exist?
+        if stream not in self._dataset_src:
+            print(f"No datasets have been returned from {stream}")
+            return None
+
+        # Does _dataset_src[stream][year] exist?
+        if year not in self._dataset_src[stream]:
+            print(
+                f"No datasets covering year {year:04} have been returned from {stream}"
+            )
+            return None
+
+        # Does _dataset_src[stream][year][varname] exist?
+        if varname not in self._dataset_src[stream][year]:
+            print(
+                f"No dataset containing {varname} from year {year:04} have been returned from {stream}"
+            )
+            return None
+
+        return self._dataset_src[stream][year][varname]
+
+    ############################################################################
+
     def gen_dataset(
         self,
         varnames,
@@ -228,7 +326,11 @@ class CaseClass(object):
         if type(varnames) == str:
             varnames = [varnames]
         if type(varnames) != list:
-            raise ValueError(f"{casenames} is not a string or list")
+            raise ValueError(f"{varnames} is not a string or list")
+
+        if stream not in self._dataset_files:
+            self._dataset_files[stream] = dict()
+            self._dataset_src[stream] = dict()
 
         # Set some defaults to pass to open_mfdataset, then apply kwargs argument
         open_mfdataset_kwargs = dict()
@@ -258,20 +360,24 @@ class CaseClass(object):
         for varname in varnames:
             timeseries_filenames = []
             for year in range(start_year, end_year + 1):
-                timeseries_filenames.extend(
-                    [
-                        filename
-                        for filename in self._timeseries_filenames[stream]
-                        if f".{varname}." in filename and f".{year:04}" in filename
-                    ]
+                if year not in self._dataset_files[stream]:
+                    self._dataset_files[stream][year] = dict()
+                    self._dataset_src[stream][year] = dict()
+                self._dataset_files[stream][year][varname] = self.get_timeseries_files(
+                    year, stream, varnames
                 )
-
+                if self._dataset_files[stream][year][varname]:
+                    self._dataset_src[stream][year][varname] = "time series"
+                    timeseries_filenames.extend(
+                        self._dataset_files[stream][year][varname]
+                    )
             if timeseries_filenames:
                 ds_timeseries_per_var.append(
                     xr.open_mfdataset(timeseries_filenames, **open_mfdataset_kwargs,)[
                         [varname] + _vars_to_keep
                     ]
                 )
+
         if ds_timeseries_per_var:
             ds_timeseries = xr.merge(ds_timeseries_per_var)
             tb_name_ts = ds_timeseries["time"].attrs["bounds"]
@@ -293,13 +399,15 @@ class CaseClass(object):
         # Pare down history file list
         history_filenames = []
         for year in range(start_year, end_year + 1):
-            history_filenames.extend(
-                [
-                    filename
-                    for filename in self._history_filenames[stream]
-                    if f".{year:04}" in filename
-                ]
+            if year not in self._dataset_files[stream]:
+                self._dataset_files[stream][year] = dict()
+                self._dataset_src[stream][year] = dict()
+            self._dataset_files[stream][year][varname] = self.get_history_files(
+                year, stream
             )
+            if self._dataset_files[stream][year][varname]:
+                self._dataset_src[stream][year][varname] = "hist"
+                history_filenames.extend(self._dataset_files[stream][year][varname])
 
         if history_filenames:
             ds_history = xr.open_mfdataset(history_filenames, **open_mfdataset_kwargs,)[

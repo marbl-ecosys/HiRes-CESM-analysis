@@ -6,6 +6,8 @@ import cftime
 import numpy as np
 import xarray as xr
 
+from .compare_ts_and_hist import compare_ts_and_hist
+
 
 def repl_coord(coordname, ds1, ds2):
     """
@@ -100,3 +102,42 @@ def get_varnames_from_metadata_list(diag_metadata_list):
         if diag_metadata["varname"] not in varnames:
             varnames.append(diag_metadata["varname"])
     return varnames
+
+
+def timeseries_and_history_comparison(casename):
+    for year in range(1, 62):
+        has_ts = True
+        found_all = True
+        print(f"Checking year {year:04}...")
+        for stream in ["pop.h.nyear1", "pop.h.nday1", "pop.h", "cice.h1", "cice.h"]:
+            has_hist = True
+            # There is no cice.h1 time series for 0001 so skip check
+            if stream == "cice.h1" and year == 1:
+                continue
+            # Run test
+            print(f"... checking stream {stream} ...")
+            comp_test = compare_ts_and_hist(casename, stream, year)
+            # Check ends when there are no history files for comparison
+            if comp_test == "no time series":
+                has_ts = False
+                break
+
+            # Skip years when there are no history files
+            # (Assume those years were already checked prior to deleting history files)
+            if comp_test == "no history":
+                print(
+                    f"Skipping stream {stream} for year {year:04} because there are no history files"
+                )
+                has_hist = False
+                continue
+
+            found_all = found_all and (comp_test == "same")
+
+        if not has_ts:
+            print(f"Could not find time series for year {year:04}")
+            break
+        if has_hist and found_all:
+            print(f"All variables available in time series for year {year:04}")
+        else:
+            print(f"Could not find time series for all variables in year {year:04}")
+        print("----")

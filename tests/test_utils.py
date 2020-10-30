@@ -7,9 +7,9 @@ import cftime
 import numpy as np
 import xarray as xr
 
-sys.path.append(os.path.abspath(os.path.join("notebooks", "utils")))
+sys.path.append(os.path.abspath(os.path.join("notebooks")))
 sys.path.append(os.path.abspath("tests"))
-from utils import time_year_plus_frac, time_set_mid, repl_coord, round_sig
+from utils.utils import time_year_plus_frac, time_set_mid, repl_coord, round_sig
 from xr_ds_ex import gen_time_bounds_values, xr_ds_ex
 
 nyrs = 300
