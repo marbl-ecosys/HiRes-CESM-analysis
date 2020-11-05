@@ -104,7 +104,9 @@ def get_varnames_from_metadata_list(diag_metadata_list):
     return varnames
 
 
-def timeseries_and_history_comparison(casename):
+def timeseries_and_history_comparison(
+    casename, run_root, archive_hist_root, campaign_root
+):
     for year in range(1, 62):
         has_ts = True
         found_all = True
@@ -116,7 +118,9 @@ def timeseries_and_history_comparison(casename):
                 continue
             # Run test
             print(f"... checking stream {stream} ...")
-            comp_test = compare_ts_and_hist(casename, stream, year)
+            comp_test = compare_ts_and_hist(
+                casename, run_root, archive_hist_root, campaign_root, stream, year
+            )
             # Check ends when there are no history files for comparison
             if comp_test == "no time series":
                 has_ts = False
