@@ -6,7 +6,7 @@
 #SBATCH -t 24:00:00
 #SBATCH -p dav
 #SBATCH -J Cice.h1_t13
-#SBATCH --account=CESM0010
+#SBATCH --account=P93300606
 #SBATCH --mem 100G
 #SBATCH -e logs/Cice.h1_t13.err.%J
 #SBATCH -o logs/Cice.h1_t13.out.%J
