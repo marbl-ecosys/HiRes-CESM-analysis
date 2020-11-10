@@ -7,5 +7,6 @@ from .Plotting import summary_plot_global_ts
 from .Plotting import summary_plot_histogram
 from .Plotting import summary_plot_maps
 from .Plotting import trend_plot
+from .utils import gen_output_roots_from_caseroot
 from .utils import get_varnames_from_metadata_list
 from .utils import timeseries_and_history_comparison

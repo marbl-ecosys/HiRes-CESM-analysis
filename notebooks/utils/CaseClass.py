@@ -1,5 +1,5 @@
 """
-    Class to use to output (log and netCDF) from the runs
+    Class to use to access output (log and netCDF) from CESM runs
 """
 
 import glob
@@ -10,15 +10,8 @@ import numpy as np
 import xarray as xr
 
 # local modules, not available through __init__
-from .config import (
-    add_first_date_and_reformat,
-    get_archive_log_dir,
-    get_campaign_popseries_dir,
-    get_campaign_ciceseries_dir,
-    get_archive_pophist_dir,
-    get_archive_cicehist_dir,
-    get_rundir,
-)
+from .config import add_first_date_and_reformat
+
 from .utils import time_set_mid
 
 ################################################################################
@@ -28,22 +21,37 @@ class CaseClass(object):
 
     # Constructor [goal: get an intake-esm catalog into memory; read from disk or generate it]
     def __init__(
-        self,
-        casenames,
-        run_root=None,
-        archive_hist_root=None,
-        campaign_root=None,
-        verbose=False,
+        self, casenames, output_roots, verbose=False,
     ):
+        """
+        casenames: a string or list containing the name(s) of the case(s) to include in the object
+        output_roots: a string or list containing the name(s) of the directories to search for log / netCDF files
+                      * netCDF files may be in one of three locations:
+                        1. {output_root} itself [e.g. output_root = RUNDIR]
+                        2. {output_root}/{component}/hist [e.g. output_root = DOUT_S]
+                        3. {output_root}/{component}/proc/tseries/{freq} [e.g. output_root = root of pyReshaper output]
+                      * log files may be in one of two locations
+                        1. {output_root} itself [e.g. output_root = RUNDIR]
+                        2. {output_root}/logs [e.g. output_root = DOUT_S]
+        """
         if type(casenames) == str:
             casenames = [casenames]
         if type(casenames) != list:
             raise ValueError(f"{casenames} is not a string or list")
+
+        if type(output_roots) == str:
+            output_roots = [output_roots]
+        if type(output_roots) != list:
+            raise ValueError(f"{output_roots} is not a string or list")
+
         self._casenames = casenames
+        self._output_roots = []
+        for output_dir in output_roots:
+            if os.path.isdir(output_dir):
+                self._output_roots.append(output_dir)
         self._verbose = verbose
-        self._log_filenames = self._find_log_files(run_root, archive_hist_root)
-        self._timeseries_filenames = self._find_timeseries_files(campaign_root)
-        self._history_filenames = self._find_hist_files(run_root, archive_hist_root)
+        self._log_filenames = self._find_log_files()
+        self._nc_filenames = self._find_nc_files()
         self._dataset_files = dict()
         self._dataset_src = dict()
 
@@ -78,7 +86,7 @@ class CaseClass(object):
     def _get_single_year_timeseries_files(self, year, stream, varname=None):
         var_check = True
         timeseries_filenames = []
-        for filename in self._timeseries_filenames[stream]:
+        for filename in self._nc_filenames[stream]:
             if varname is not None:
                 var_check = f".{varname}." in filename
             if var_check and f".{year:04}" in filename:
@@ -111,131 +119,81 @@ class CaseClass(object):
     def get_history_files(self, year, stream):
         return [
             filename
-            for filename in self._history_filenames[stream]
-            if f".{year:04}" in filename
+            for filename in self._nc_filenames[stream]
+            if f"{stream}.{year:04}" in filename
         ]
 
     ############################################################################
 
-    def _find_log_files(self, run_root, archive_hist_root):
+    def _find_log_files(self):
         """
-        Look in rundir and archive for cesm.log, ocn.log, and cpl.log files
+        Look in each _output_roots dir (and /logs) for cesm.log, ocn.log, and cpl.log files
         """
         files = dict()
         for component in ["cesm", "ocn", "cpl"]:
             files[component] = []
-            rootdirs = []
-            for casename in self._casenames:
-                # (1) If archive_hist_root is defined, look for pop history files in archive
-                if archive_hist_root is not None:
-                    rootdirs.append(
-                        get_archive_pophist_dir(casename, archive_hist_root)
-                    )
-                # (2) If run_root is defined, look for pop history files in run directory as well
-                if run_root is not None:
-                    rootdirs.append(get_rundir(casename, run_root))
-
-                for rootdir in rootdirs:
+            for output_dir in self._output_roots:
+                files[component].extend(
+                    glob.glob(os.path.join(output_dir, f"{component}.log.*"))
+                )
+                if os.path.isdir(os.path.join(output_dir, "logs")):
                     files[component].extend(
-                        glob.glob(os.path.join(rootdir, f"{component}.log.*"))
+                        glob.glob(
+                            os.path.join(output_dir, "logs", f"{component}.log.*")
+                        )
                     )
         return files
 
     ############################################################################
 
-    def _find_timeseries_files(self, campaign_root):
+    def _find_nc_files(self):
         """
         Look in campaign_root for pop time series files
         """
+        component_and_freq = dict()
+        component_and_freq["pop.h"] = ("ocn", "month_1")
+        component_and_freq["pop.h.nday1"] = ("ocn", "day_1")
+        component_and_freq["pop.h.nyear1"] = ("ocn", "year_1")
+        component_and_freq["cice.h"] = ("ice", "month_1")
+        component_and_freq["cice.h1"] = ("ice", "day_1")
+
         files = dict()
-        subdirs = dict()
-        subdirs["pop.h"] = "month_1"
-        subdirs["pop.h.nday1"] = "day_1"
-        subdirs["pop.h.nyear1"] = "year_1"
-        subdirs["cice.h"] = "month_1"
-        subdirs["cice.h1"] = "day_1"
-        for stream in subdirs:
+        for stream in component_and_freq:
             files[stream] = []
-
-        # Skip if campaign_root is not defined
-        if campaign_root is not None:
-            # (1) Look for POP time series files
-            for stream in ["pop.h", "pop.h.nday1", "pop.h.nyear1"]:
-                for casename in self._casenames:
-                    files[stream].extend(
-                        glob.glob(
-                            os.path.join(
-                                get_campaign_popseries_dir(casename, campaign_root),
-                                subdirs[stream],
-                                f"{casename}.{stream}.*.nc",
-                            )
-                        )
-                    )
-                files[stream].sort()
-
-            # (2) Look for CICE time series files
-            for stream in ["cice.h", "cice.h1"]:
-                for casename in self._casenames:
-                    files[stream].extend(
-                        glob.glob(
-                            os.path.join(
-                                get_campaign_ciceseries_dir(casename, campaign_root),
-                                subdirs[stream],
-                                f"{casename}.{stream}.*.nc",
-                            )
-                        )
-                    )
-                files[stream].sort()
-
-        # Return dictionary
-        return files
-
-    ############################################################################
-
-    def _find_hist_files(self, run_root, archive_hist_root):
-        """
-        Look in run_root and archive_hist_root for pop history files
-        """
-        files = dict()
-        for stream in ["pop.h", "pop.h.nday1", "pop.h.nyear1"]:
-            files[stream] = []
+            comp = component_and_freq[stream][0]
+            freq = component_and_freq[stream][1]
             for casename in self._casenames:
-                rootdirs = []
-                # (1) If archive_hist_root is defined, look for pop history files in archive
-                if archive_hist_root is not None:
-                    rootdirs.append(
-                        get_archive_pophist_dir(casename, archive_hist_root)
-                    )
-                # (2) If run_root is defined, look for pop history files in run directory as well
-                if run_root is not None:
-                    rootdirs.append(get_rundir(casename, run_root))
+                for output_dir in self._output_roots:
+                    if self._verbose:
+                        print(f"Checking {output_dir} for {stream} files...")
+                    # (1) Look for history files in output_dir
+                    #     TODO: need better way to avoid wrong stream than .0*
+                    #           (do not want to glob *.pop.h.nday1.* when looking for pop.h files)
+                    pattern = f"{casename}.{stream}.0*.nc"
+                    files_found = glob.glob(os.path.join(output_dir, pattern))
+                    files_found.sort()
+                    files[stream].extend(files_found)
 
-                # Look for POP history files
-                for rootdir in rootdirs:
-                    files[stream].extend(
-                        glob.glob(os.path.join(rootdir, f"{casename}.{stream}.0*.nc"))
-                    )
-            files[stream].sort()
+                    # (2) look for history files that might be in {output_dir}/{comp}/hist
+                    #     TODO: need better way to avoid wrong stream than .0*
+                    #           (do not want to glob *.pop.h.nday1.* when looking for pop.h files)
+                    hist_dir = os.path.join(output_dir, comp, "hist")
+                    if os.path.isdir(hist_dir):
+                        pattern = f"{casename}.{stream}.0*.nc"
+                        files_found = glob.glob(os.path.join(hist_dir, pattern))
+                        files_found.sort()
+                        files[stream].extend(files_found)
 
-        for stream in ["cice.h", "cice.h1"]:
-            files[stream] = []
-            for casename in self._casenames:
-                rootdirs = []
-                # (1) If archive_hist_root is defined, look for pop history files in archive
-                if archive_hist_root is not None:
-                    rootdirs.append(
-                        get_archive_cicehist_dir(casename, archive_hist_root)
+                    # (3) look for time series files that might be in {output_dir}/{comp}/proc/time_series/{freq}
+                    tseries_dir = os.path.join(
+                        output_dir, comp, "proc", "tseries", freq
                     )
-                # (2) If run_root is defined, look for pop history files in run directory as well
-                if run_root is not None:
-                    rootdirs.append(get_rundir(casename, run_root))
+                    if os.path.isdir(tseries_dir):
+                        pattern = f"{casename}.{stream}.*.nc"
+                        files_found = glob.glob(os.path.join(tseries_dir, pattern))
+                        files_found.sort()
+                        files[stream].extend(files_found)
 
-                # Look for CICE history files
-                for rootdir in rootdirs:
-                    files[stream].extend(
-                        glob.glob(os.path.join(rootdir, f"{casename}.{stream}.0*.nc"))
-                    )
-            files[stream].sort()
         return files
 
     ############################################################################

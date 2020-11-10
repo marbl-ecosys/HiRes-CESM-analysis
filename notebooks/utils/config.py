@@ -5,47 +5,6 @@
 import os
 
 
-def get_rundir(casename, run_root):
-    return os.path.join(run_root, casename, "run")
-
-
-################################################################################
-
-
-def get_campaign_popseries_dir(casename, campaign_root):
-    freq_name = dict()
-    return os.path.join(campaign_root, casename, "output", "ocn", "proc", "tseries",)
-
-
-################################################################################
-
-
-def get_campaign_ciceseries_dir(casename, campaign_root):
-    freq_name = dict()
-    return os.path.join(campaign_root, casename, "output", "ice", "proc", "tseries",)
-
-
-################################################################################
-
-
-def get_archive_pophist_dir(casename, archive_hist_root):
-    return os.path.join(archive_hist_root, casename, "ocn", "hist")
-
-
-################################################################################
-
-
-def get_archive_cicehist_dir(casename, archive_hist_root):
-    return os.path.join(archive_hist_root, casename, "ice", "hist")
-
-
-################################################################################
-
-
-def get_archive_log_dir(casename, archive_hist_root):
-    return os.path.join(archive_hist_root, casename, "logs")
-
-
 ################################################################################
 
 
