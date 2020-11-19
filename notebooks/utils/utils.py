@@ -1,7 +1,6 @@
 """utility functions"""
 
 import math
-import os
 
 import cftime
 import numpy as np
@@ -131,10 +130,12 @@ def gen_output_roots_from_caseroot(caseroot):
 
     output_roots = []
     for single_root in caseroot:
-        for xml_var_to_query in ["DOUT_S_ROOT", "RUNDIR"]:
-            xml_var = cime_xmlquery(single_root, xml_var_to_query)
-            if os.path.isdir(xml_var):
-                output_roots.append(xml_var)
+        vars_to_check = ["RUNDIR"]
+        if cime_xmlquery(single_root, "DOUT_S") == "TRUE":
+            vars_to_check.append("DOUT_S_ROOT")
+        for xml_var_to_query in vars_to_check:
+            output_roots.append(cime_xmlquery(single_root, xml_var_to_query))
+
     return output_roots
 
 

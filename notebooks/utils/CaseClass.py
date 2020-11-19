@@ -27,9 +27,12 @@ class CaseClass(object):
         casenames: a string or list containing the name(s) of the case(s) to include in the object
         output_roots: a string or list containing the name(s) of the directories to search for log / netCDF files
                       * netCDF files may be in one of three locations:
-                        1. {output_root} itself [e.g. output_root = RUNDIR]
-                        2. {output_root}/{component}/hist [e.g. output_root = DOUT_S]
-                        3. {output_root}/{component}/proc/tseries/{freq} [e.g. output_root = root of pyReshaper output]
+                        1. history files may be in {output_root} itself
+                           [e.g. output_root = RUNDIR]
+                        2. history files may be in {output_root}/{component}/hist
+                           [e.g. output_root = DOUT_S]
+                        3. time series files may be in {output_root}/{component}/proc/tseries/{freq}
+                           [e.g. output_root = root of pyReshaper output]
                       * log files may be in one of two locations
                         1. {output_root} itself [e.g. output_root = RUNDIR]
                         2. {output_root}/logs [e.g. output_root = DOUT_S]
@@ -50,8 +53,15 @@ class CaseClass(object):
             if os.path.isdir(output_dir):
                 self._output_roots.append(output_dir)
         self._verbose = verbose
+        # TODO: figure out how to let this configuration be user-specified (maybe YAML?)
+        self._stream_metadata = dict()
+        self._stream_metadata["pop.h"] = {"comp": "ocn", "freq": "month_1"}
+        self._stream_metadata["pop.h.nday1"] = {"comp": "ocn", "freq": "day_1"}
+        self._stream_metadata["pop.h.nyear1"] = {"comp": "ocn", "freq": "year_1"}
+        self._stream_metadata["cice.h"] = {"comp": "ice", "freq": "month_1"}
+        self._stream_metadata["cice.h1"] = {"comp": "ice", "freq": "day_1"}
         self._log_filenames = self._find_log_files()
-        self._nc_filenames = self._find_nc_files()
+        self._history_filenames, self._timeseries_filenames = self._find_nc_files()
         self._dataset_files = dict()
         self._dataset_src = dict()
 
@@ -83,14 +93,12 @@ class CaseClass(object):
 
     ############################################################################
 
-    def _get_single_year_timeseries_files(self, year, stream, varname=None):
-        var_check = True
-        timeseries_filenames = []
-        for filename in self._nc_filenames[stream]:
-            if varname is not None:
-                var_check = f".{varname}." in filename
-            if var_check and f".{year:04}" in filename:
-                timeseries_filenames.extend([filename])
+    def _get_single_year_timeseries_files(self, year, stream, varname):
+        timeseries_filenames = [
+            filename
+            for filename in self._timeseries_filenames[stream]
+            if (f".{varname}." in filename and f".{year:04}" in filename)
+        ]
         return timeseries_filenames
 
     ############################################################################
@@ -116,10 +124,23 @@ class CaseClass(object):
 
     ############################################################################
 
+    def check_for_year_in_timeseries_files(self, year, stream):
+        """
+        Return True if {stream} has any timeseries files from {year}
+        """
+        return any(
+            [
+                f".{year:04}" in filename
+                for filename in self._timeseries_filenames[stream]
+            ]
+        )
+
+    ############################################################################
+
     def get_history_files(self, year, stream):
         return [
             filename
-            for filename in self._nc_filenames[stream]
+            for filename in self._history_filenames[stream]
             if f"{stream}.{year:04}" in filename
         ]
 
@@ -148,20 +169,16 @@ class CaseClass(object):
 
     def _find_nc_files(self):
         """
-        Look in campaign_root for pop time series files
+        Look for netcdf files in each output_root directory, as well as
+        {component}/hist and {component}/proc/tseries/{freq} subdirectories
         """
-        component_and_freq = dict()
-        component_and_freq["pop.h"] = ("ocn", "month_1")
-        component_and_freq["pop.h.nday1"] = ("ocn", "day_1")
-        component_and_freq["pop.h.nyear1"] = ("ocn", "year_1")
-        component_and_freq["cice.h"] = ("ice", "month_1")
-        component_and_freq["cice.h1"] = ("ice", "day_1")
-
-        files = dict()
-        for stream in component_and_freq:
-            files[stream] = []
-            comp = component_and_freq[stream][0]
-            freq = component_and_freq[stream][1]
+        hist_files = dict()
+        ts_files = dict()
+        for stream in self._stream_metadata:
+            hist_files[stream] = []
+            ts_files[stream] = []
+            comp = self._stream_metadata[stream]["comp"]
+            freq = self._stream_metadata[stream]["freq"]
             for casename in self._casenames:
                 for output_dir in self._output_roots:
                     if self._verbose:
@@ -172,7 +189,7 @@ class CaseClass(object):
                     pattern = f"{casename}.{stream}.0*.nc"
                     files_found = glob.glob(os.path.join(output_dir, pattern))
                     files_found.sort()
-                    files[stream].extend(files_found)
+                    hist_files[stream].extend(files_found)
 
                     # (2) look for history files that might be in {output_dir}/{comp}/hist
                     #     TODO: need better way to avoid wrong stream than .0*
@@ -182,7 +199,7 @@ class CaseClass(object):
                         pattern = f"{casename}.{stream}.0*.nc"
                         files_found = glob.glob(os.path.join(hist_dir, pattern))
                         files_found.sort()
-                        files[stream].extend(files_found)
+                        hist_files[stream].extend(files_found)
 
                     # (3) look for time series files that might be in {output_dir}/{comp}/proc/time_series/{freq}
                     tseries_dir = os.path.join(
@@ -192,9 +209,9 @@ class CaseClass(object):
                         pattern = f"{casename}.{stream}.*.nc"
                         files_found = glob.glob(os.path.join(tseries_dir, pattern))
                         files_found.sort()
-                        files[stream].extend(files_found)
+                        ts_files[stream].extend(files_found)
 
-        return files
+        return hist_files, ts_files
 
     ############################################################################
 

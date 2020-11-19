@@ -31,7 +31,7 @@ def compare_ts_and_hist(
 
     case = CaseClass.CaseClass(casename, output_roots)
     # Return if no time series is available
-    if len(case.get_timeseries_files(year, stream)) == 0:
+    if not case.check_for_year_in_timeseries_files(year, stream):
         return "no time series"
 
     # Return if no history files are available
