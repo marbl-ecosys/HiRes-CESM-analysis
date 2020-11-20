@@ -8,7 +8,7 @@ from . import CaseClass
 
 
 def compare_ts_and_hist(
-    casename, stream, year, exclude_vars=["time_bound", "time_bounds"]
+    casename, output_roots, stream, year, exclude_vars=["time_bound", "time_bounds"],
 ):
     """
     Generate a CaseClass object from a given casename. For a given stream
@@ -29,9 +29,9 @@ def compare_ts_and_hist(
 
     found_all = True
 
-    case = CaseClass.CaseClass(casename)
+    case = CaseClass.CaseClass(casename, output_roots)
     # Return if no time series is available
-    if len(case.get_timeseries_files(year, stream)) == 0:
+    if not case.check_for_year_in_timeseries_files(year, stream):
         return "no time series"
 
     # Return if no history files are available

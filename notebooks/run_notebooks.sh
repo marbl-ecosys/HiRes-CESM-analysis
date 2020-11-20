@@ -30,7 +30,7 @@ submit_slurm_script () {
 #SBATCH -t 6:00:00
 #SBATCH -p dav
 #SBATCH -J ${nbname}
-#SBATCH --account=CESM0010
+#SBATCH --account=P93300606
 #SBATCH --mem 100G
 #SBATCH -e logs/${nbname}.err.%J
 #SBATCH -o logs/${nbname}.out.%J

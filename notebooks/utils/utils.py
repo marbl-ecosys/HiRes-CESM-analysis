@@ -7,6 +7,9 @@ import numpy as np
 import xarray as xr
 
 from .compare_ts_and_hist import compare_ts_and_hist
+from .cime import cime_xmlquery
+
+################################################################################
 
 
 def repl_coord(coordname, ds1, ds2):
@@ -25,6 +28,9 @@ def repl_coord(coordname, ds1, ds2):
         tb_name = ds1[coordname].attrs["bounds"]
         ds_out = xr.merge([ds_out, ds1[tb_name]])
     return ds_out
+
+
+################################################################################
 
 
 def time_set_mid(ds, time_name, deep=False):
@@ -64,6 +70,9 @@ def time_set_mid(ds, time_name, deep=False):
     return ds_out
 
 
+################################################################################
+
+
 def time_year_plus_frac(ds, time_name):
     """return time variable, as numpy array of year plus fraction of year values"""
 
@@ -88,12 +97,18 @@ def time_year_plus_frac(ds, time_name):
     return tvals_days / 365.0
 
 
+################################################################################
+
+
 def round_sig(x, ndigits):
     """round x to ndigits precision"""
     if x == 0:
         return x
     ndigits_offset = math.floor(math.log10(abs(x)))
     return round(x, ndigits - 1 - ndigits_offset)
+
+
+################################################################################
 
 
 def get_varnames_from_metadata_list(diag_metadata_list):
@@ -104,7 +119,30 @@ def get_varnames_from_metadata_list(diag_metadata_list):
     return varnames
 
 
-def timeseries_and_history_comparison(casename):
+################################################################################
+
+
+def gen_output_roots_from_caseroot(caseroot):
+    if type(caseroot) == str:
+        caseroot = [caseroot]
+    if type(caseroot) != list:
+        raise TypeError("caseroot must be a str or list, {caseroot} is not acceptable")
+
+    output_roots = []
+    for single_root in caseroot:
+        vars_to_check = ["RUNDIR"]
+        if cime_xmlquery(single_root, "DOUT_S") == "TRUE":
+            vars_to_check.append("DOUT_S_ROOT")
+        for xml_var_to_query in vars_to_check:
+            output_roots.append(cime_xmlquery(single_root, xml_var_to_query))
+
+    return output_roots
+
+
+################################################################################
+
+
+def timeseries_and_history_comparison(casename, output_roots):
     for year in range(1, 62):
         has_ts = True
         found_all = True
@@ -116,7 +154,7 @@ def timeseries_and_history_comparison(casename):
                 continue
             # Run test
             print(f"... checking stream {stream} ...")
-            comp_test = compare_ts_and_hist(casename, stream, year)
+            comp_test = compare_ts_and_hist(casename, output_roots, stream, year)
             # Check ends when there are no history files for comparison
             if comp_test == "no time series":
                 has_ts = False
