@@ -12,7 +12,7 @@ import xarray as xr
 # local modules, not available through __init__
 from .config import add_first_date_and_reformat
 
-from .utils import time_set_mid
+from .utils import time_set_mid, dict_copy_vals, print_key_metadata
 
 ################################################################################
 
@@ -325,10 +325,11 @@ class CaseClass(object):
         self,
         varnames,
         stream,
+        vars_to_keep=None,
         start_year=1,
         end_year=61,
         quiet=False,
-        verbose=False,
+        debug=False,
         **kwargs,
     ):
         """
@@ -369,6 +370,12 @@ class CaseClass(object):
 
         # Make sure these variables are kept in all datasets
         _vars_to_keep = ["time_bound", "TAREA"]
+        if vars_to_keep is not None:
+            if type(vars_to_keep) == str:
+                vars_to_keep = [vars_to_keep]
+            if type(vars_to_keep) != list:
+                raise ValueError(f"{vars_to_keep} is not a string or list")
+            _vars_to_keep.extend(vars_to_keep)
 
         # Pare down time series file list (only contains years and variables we are interested in)
         ds_timeseries_per_var = []
@@ -387,14 +394,37 @@ class CaseClass(object):
                         self._dataset_files[stream][year][varname]
                     )
             if timeseries_filenames:
-                ds_timeseries_per_var.append(
-                    xr.open_mfdataset(timeseries_filenames, **open_mfdataset_kwargs,)[
-                        [varname] + _vars_to_keep
-                    ]
-                )
+                dsmf = xr.open_mfdataset(timeseries_filenames, **open_mfdataset_kwargs)[
+                    [varname] + _vars_to_keep
+                ]
+                with xr.open_dataset(timeseries_filenames[0])[
+                    [varname] + _vars_to_keep
+                ] as ds0:
+                    if debug:
+                        print(open_mfdataset_kwargs)
+                        print_key_metadata(
+                            dsmf, "timeseries_filenames open_mfdataset dsmf"
+                        )
+                        print_key_metadata(
+                            ds0, "timeseries_filenames open_mfdataset ds0"
+                        )
+                    dict_copy_vals(ds0.encoding, dsmf.encoding, "unlimited_dims")
+                    dict_copy_vals(
+                        ds0["time"].encoding,
+                        dsmf["time"].encoding,
+                        ["dtype", "_FillValue", "units", "calendar"],
+                    )
+                ds_timeseries_per_var.append(dsmf)
 
         if ds_timeseries_per_var:
-            ds_timeseries = xr.merge(ds_timeseries_per_var)
+            ds_timeseries = xr.merge(ds_timeseries_per_var, combine_attrs="override")
+            ds0 = ds_timeseries_per_var[0]
+            if debug:
+                print_key_metadata(
+                    ds_timeseries, "ds_timeseries_per_var merge ds_timeseries"
+                )
+                print_key_metadata(ds0, "ds_timeseries_per_var merge ds0")
+            dict_copy_vals(ds0.encoding, ds_timeseries.encoding, "unlimited_dims")
             tb_name_ts = ds_timeseries["time"].attrs["bounds"]
             tb = ds_timeseries[tb_name_ts]
             if tb.dtype == np.dtype("O"):
@@ -425,9 +455,21 @@ class CaseClass(object):
                 history_filenames.extend(self._dataset_files[stream][year][varname])
 
         if history_filenames:
-            ds_history = xr.open_mfdataset(history_filenames, **open_mfdataset_kwargs,)[
+            ds_history = xr.open_mfdataset(history_filenames, **open_mfdataset_kwargs)[
                 varnames + _vars_to_keep
             ]
+            with xr.open_dataset(history_filenames[0])[varnames + _vars_to_keep] as ds0:
+                if debug:
+                    print_key_metadata(
+                        ds_history, "history_filenames open_mfdataset ds_history"
+                    )
+                    print_key_metadata(ds0, "history_filenames open_mfdataset ds0")
+                dict_copy_vals(ds0.encoding, ds_history.encoding, "unlimited_dims")
+                dict_copy_vals(
+                    ds0["time"].encoding,
+                    ds_history["time"].encoding,
+                    ["dtype", "_FillValue", "units", "calendar"],
+                )
 
         # Concatenate discovered datasets
         if ds_timeseries_per_var:
@@ -436,6 +478,16 @@ class CaseClass(object):
                     f'Time series ends at {ds_timeseries["time_bound"].values[-1,1]}, history files begin at {ds_history["time_bound"].values[0,0]}'
                 )
                 ds = xr.concat([ds_timeseries, ds_history], dim="time", **concat_kwargs)
+                if debug:
+                    print_key_metadata(ds, "xr.concat ds")
+                    print_key_metadata(ds_timeseries, "xr.concat ds_timeseries")
+                    print_key_metadata(ds_history, "xr.concat ds_history")
+                for ds_src in [ds_timeseries, ds_history]:
+                    dict_copy_vals(
+                        ds_src["time"].encoding,
+                        ds["time"].encoding,
+                        ["dtype", "_FillValue", "units", "calendar"],
+                    )
             else:
                 ds = ds_timeseries
         else:
