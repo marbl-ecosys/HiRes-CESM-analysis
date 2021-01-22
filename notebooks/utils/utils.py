@@ -179,3 +179,36 @@ def timeseries_and_history_comparison(casename, output_roots):
         else:
             print(f"Could not find time series for all variables in year {year:04}")
         print("----")
+
+
+################################################################################
+
+
+def dict_copy_vals(src, dst, keys, abort_on_mismatch=True):
+    for key in keys if type(keys) == list else [keys]:
+        if key in src:
+            if key in dst and abort_on_mismatch:
+                if dst[key] != src[key]:
+                    raise ValueError(
+                        f"{key} exists in dst and src and dst values mismatch"
+                    )
+            else:
+                dst[key] = src[key]
+
+
+################################################################################
+
+
+def print_key_metadata(ds, msg=None):
+    print(64 * "*")
+    if msg is not None:
+        print(msg)
+        print(64 * "*")
+    for attr_name in ["chunks", "attrs", "encoding"]:
+        print("ds." + attr_name)
+        print(getattr(ds, attr_name))
+        print(32 * "*")
+    for attr_name in ["chunks", "attrs", "encoding"]:
+        print("ds['time']." + attr_name)
+        print(getattr(ds["time"], attr_name))
+        print(32 * "*")
