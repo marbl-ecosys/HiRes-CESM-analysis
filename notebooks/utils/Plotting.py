@@ -6,6 +6,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
 import cftime
+import pathlib
+import json
 
 # local modules, not available through __init__
 from .utils import time_year_plus_frac, round_sig
@@ -14,7 +16,9 @@ from .utils_units import conv_units
 ################################################################################
 
 
-def compare_fields_at_lat_lon(list_of_das_in, nlat, nlon, individual_plots=False):
+def compare_fields_at_lat_lon(
+    list_of_das_in, nlat, nlon, individual_plots=False, filename=None
+):
 
     # This shouldn't be hard-coded... but how else to get?
     xticks = 365 + np.array([0, 31, 59, 90, 120, 151])
@@ -68,6 +72,9 @@ def compare_fields_at_lat_lon(list_of_das_in, nlat, nlon, individual_plots=False
         #         plt.xticks(xticks, xlabels)
         plt.yticks(yticks)
         plt.xlabel("Date (year 0001)")
+
+    if filename:
+        fig.savefig(filename)
 
     return fig
 
@@ -203,7 +210,8 @@ def summary_plot_histogram(da, diag_metadata, lines_per_plot=12):
 ################################################################################
 
 
-def summary_plot_maps(da, diag_metadata):
+def summary_plot_maps(da, diag_metadata, save_pngs=False, root_dir="images"):
+
     # maps, 1 plots for time level
     cmap = "plasma"
 
@@ -223,8 +231,21 @@ def summary_plot_maps(da, diag_metadata):
                 to_plot = np.log10(xr.where(to_plot > 0.0, to_plot, np.nan))
                 to_plot.name = f"log10({to_plot.name})"
 
-            to_plot.plot(cmap=cmap, vmin=vmin, vmax=vmax)
-            plt.show()
+            ax = to_plot.plot(cmap=cmap, vmin=vmin, vmax=vmax)
+            fig = ax.get_figure()
+            if save_pngs:
+                datestamp = f"{da.time[t_ind].data.item()}".split(" ")[0]
+                _savefig(
+                    fig,
+                    da.name,
+                    datestamp,
+                    apply_log10,
+                    "summary_plot",
+                    root_dir=root_dir,
+                )
+            else:
+                plt.show()
+            plt.close(fig)
 
 
 ################################################################################
@@ -250,6 +271,42 @@ def trend_plot(da, vmin=None, vmax=None, invert_yaxis=False):
     if invert_yaxis:
         ax.invert_yaxis()
     plt.show()
+
+
+################################################################################
+
+
+def _savefig(fig, varname, datestamp, apply_log10, plot_type, root_dir="images"):
+    """
+        Saves fig as a PNG, with the file name determined by the other parameters.
+
+        Also writes metadata about image file to a JSON file
+    """
+
+    # Remove trailing slash from root_dir
+    if root_dir[-1] == "/":
+        root_dir = root_dir[:-1]
+
+    # Will include 'log10' in filename if apply_log10 is set
+    log_str = "" if not apply_log10 else ".log10"
+
+    # Set up dictionary for metadata
+    metadata = dict()
+
+    if plot_type == "summary_plot":
+        filename = f"{root_dir}/{varname}/{plot_type}/{datestamp}{log_str}"
+
+    metadata["filepath"] = f"{filename}.png"
+    metadata["apply_log10"] = apply_log10
+    metadata["date"] = datestamp
+    metadata["varname"] = varname
+    metadata["plot_type"] = plot_type
+
+    parent_dir = pathlib.Path(filename).parent
+    parent_dir.mkdir(parents=True, exist_ok=True)
+    fig.savefig(metadata["filepath"])
+    with open(f"{filename}.json", "w") as fp:
+        json.dump(metadata, fp)
 
 
 ################################################################################
