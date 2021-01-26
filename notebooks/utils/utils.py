@@ -5,6 +5,9 @@ import math
 import cftime
 import numpy as np
 import xarray as xr
+import pathlib
+import pandas as pd
+import json
 
 from .compare_ts_and_hist import compare_ts_and_hist
 from .cime import cime_xmlquery
@@ -212,3 +215,29 @@ def print_key_metadata(ds, msg=None):
         print("ds['time']." + attr_name)
         print(getattr(ds["time"], attr_name))
         print(32 * "*")
+
+
+def generate_plot_catalog(root_dir, extension=".json"):
+    """
+    Generate a single dataframe from plot attributes saved in json files.
+    Parameters
+    ----------
+    root_dir : str, pathlib.Path
+          The root directory
+    extension : str, default `.json.`
+          file extension to look for.
+
+    Returns
+    -------
+    df : pd.DataFrame
+    """
+    root_dir = pathlib.Path(root_dir)
+    files = sorted(root_dir.rglob(f"**/*{extension}"))
+    data = []
+    if files:
+        for file in files:
+            data.append(json.load(file.open()))
+        return pd.DataFrame(data)
+    else:
+        print(f"Found 0 files with extension={extension} in {root_dir}.")
+        return pd.DataFrame()
