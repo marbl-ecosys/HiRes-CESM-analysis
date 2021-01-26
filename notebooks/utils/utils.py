@@ -217,7 +217,7 @@ def print_key_metadata(ds, msg=None):
         print(32 * "*")
 
 
-def generate_plot_catalog(root_dir, extension=".json"):
+def generate_plot_catalog(root_dir, image_dir_name="images", extension=".json"):
     """
     Generate a single dataframe from plot attributes saved in json files.
     Parameters
@@ -232,12 +232,18 @@ def generate_plot_catalog(root_dir, extension=".json"):
     df : pd.DataFrame
     """
     root_dir = pathlib.Path(root_dir)
+    image_dir = root_dir / image_dir_name
+    image_dir.exists()
     files = sorted(root_dir.rglob(f"**/*{extension}"))
     data = []
     if files:
         for file in files:
-            data.append(json.load(file.open()))
+            metadata = json.load(file.open())
+            metadata["filepath"] = (
+                (root_dir / metadata["filepath"]).absolute().as_posix()
+            )
+            data.append(metadata)
         return pd.DataFrame(data)
     else:
-        print(f"Found 0 files with extension={extension} in {root_dir}.")
+        print(f"Found 0 files with extension={extension} in {image_dir}.")
         return pd.DataFrame()
