@@ -6,12 +6,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
 import cftime
-import pathlib
-import json
 
 # local modules, not available through __init__
 from .utils import time_year_plus_frac, round_sig
 from .utils_units import conv_units
+from .PlotTypeClass import SummaryMapClass
 
 ################################################################################
 
@@ -235,14 +234,8 @@ def summary_plot_maps(da, diag_metadata, save_pngs=False, root_dir="images"):
             fig = ax.get_figure()
             if save_pngs:
                 datestamp = f"{da.time[t_ind].data.item()}".split(" ")[0]
-                _savefig(
-                    fig,
-                    da.name,
-                    datestamp,
-                    apply_log10,
-                    "summary_plot",
-                    root_dir=root_dir,
-                )
+                summary_map = SummaryMapClass(da.name, datestamp, apply_log10)
+                summary_map.savefig(fig, root_dir=root_dir)
             else:
                 plt.show()
             plt.close(fig)
@@ -274,39 +267,6 @@ def trend_plot(da, vmin=None, vmax=None, invert_yaxis=False):
 
 
 ################################################################################
-
-
-def _savefig(fig, varname, datestamp, apply_log10, plot_type, root_dir="images"):
-    """
-        Saves fig as a PNG, with the file name determined by the other parameters.
-
-        Also writes metadata about image file to a JSON file
-    """
-
-    # Remove trailing slash from root_dir
-    if root_dir[-1] == "/":
-        root_dir = root_dir[:-1]
-
-    # Will include 'log10' in filename if apply_log10 is set
-    log_str = "" if not apply_log10 else ".log10"
-
-    # Set up dictionary for metadata
-    metadata = dict()
-
-    if plot_type == "summary_plot":
-        filename = f"{root_dir}/{varname}/{plot_type}/{datestamp}{log_str}"
-
-    metadata["filepath"] = f"{filename}.png"
-    metadata["apply_log10"] = apply_log10
-    metadata["date"] = datestamp
-    metadata["varname"] = varname
-    metadata["plot_type"] = plot_type
-
-    parent_dir = pathlib.Path(filename).parent
-    parent_dir.mkdir(parents=True, exist_ok=True)
-    fig.savefig(metadata["filepath"])
-    with open(f"{filename}.json", "w") as fp:
-        json.dump(metadata, fp)
 
 
 ################################################################################
