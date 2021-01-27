@@ -7,7 +7,7 @@ class PlotTypeClass(object):
     def __init__(self):
         raise NotImplementedError("This must be implemented in child class")
 
-    def get_filepath(self):
+    def get_filepaths(self):
         raise NotImplementedError("This must be implemented in child class")
 
     def savefig(self, fig, root_dir="images"):
@@ -22,21 +22,18 @@ class PlotTypeClass(object):
             root_dir = root_dir[:-1]
 
         # Set up dictionary for metadata
-        filepath = self.get_filepath()
         metadata = self.metadata
-        metadata["filepath"] = f"{filepath}.png"
-        fullpath = os.path.join(
-            root_dir, self.metadata["plot_type"], metadata["filepath"]
+        filepath, jsonpath = self.get_filepaths()
+        metadata["filepath"] = os.path.join(
+            root_dir, self.metadata["plot_type"], f"{filepath}.png"
         )
-        jsonpath = os.path.join(
-            root_dir, self.metadata["plot_type"], "metadata", f"{filepath}.json"
-        )
+        jsonpath = os.path.join(root_dir, self.metadata["plot_type"], jsonpath)
 
-        for path in [fullpath, jsonpath]:
+        for path in [metadata["filepath"], jsonpath]:
             parent_dir = pathlib.Path(path).parent
             parent_dir.mkdir(parents=True, exist_ok=True)
 
-        fig.savefig(fullpath)
+        fig.savefig(metadata["filepath"])
         with open(jsonpath, "w") as fp:
             json.dump(metadata, fp)
 
@@ -45,13 +42,23 @@ class PlotTypeClass(object):
 
 
 class SummaryMapClass(PlotTypeClass):
-    def __init__(self, varname, datestamp, apply_log10):
+    def __init__(self, varname, casename, datestamp, apply_log10):
         self.metadata = dict()
         self.metadata["plot_type"] = "summary_map"
         self.metadata["varname"] = varname
+        self.metadata["casename"] = casename
         self.metadata["date"] = datestamp
         self.metadata["apply_log10"] = apply_log10
 
-    def get_filepath(self):
+    def get_filepaths(self):
         log_str = "" if not self.metadata["apply_log10"] else ".log10"
-        return f"{self.metadata['varname']}.{self.metadata['date']}{log_str}"
+        filepath = os.path.join(
+            self.metadata["casename"],
+            f"{self.metadata['varname']}.{self.metadata['date']}{log_str}",
+        )
+        jsonpath = os.path.join(
+            self.metadata["casename"],
+            "metadata",
+            f"{self.metadata['varname']}.{self.metadata['date']}{log_str}",
+        )
+        return filepath, jsonpath

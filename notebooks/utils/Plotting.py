@@ -209,8 +209,12 @@ def summary_plot_histogram(da, diag_metadata, lines_per_plot=12):
 ################################################################################
 
 
-def summary_plot_maps(da, diag_metadata, save_pngs=False, root_dir="images"):
+def summary_plot_maps(da, diag_metadata, **plot_options):
 
+    save_pngs = plot_options.get("save_pngs", False)
+    if save_pngs:
+        casename = plot_options["casename"]  # Required!
+        root_dir = plot_options.get("root_dir", "images")
     # maps, 1 plots for time level
     cmap = "plasma"
 
@@ -234,7 +238,7 @@ def summary_plot_maps(da, diag_metadata, save_pngs=False, root_dir="images"):
             fig = ax.get_figure()
             if save_pngs:
                 datestamp = f"{da.time[t_ind].data.item()}".split(" ")[0]
-                summary_map = SummaryMapClass(da.name, datestamp, apply_log10)
+                summary_map = SummaryMapClass(da.name, casename, datestamp, apply_log10)
                 summary_map.savefig(fig, root_dir=root_dir)
             else:
                 plt.show()
