@@ -17,6 +17,9 @@ class _PlotTypeBaseClass(object):
             Also writes metadata about image file to a JSON file
         """
 
+        # Always use tight_layout
+        fig.tight_layout()
+
         # Remove trailing slash from root_dir
         if root_dir[-1] == "/":
             root_dir = root_dir[:-1]
@@ -74,6 +77,29 @@ class SummaryTSClass(_PlotTypeBaseClass):
 
     def get_filepaths(self):
         file_prefix = f"{self.metadata['varname']}.{self.metadata['time_period']}"
+        filepath = os.path.join(self.metadata["casename"], file_prefix)
+        jsonpath = os.path.join(self.metadata["casename"], "metadata", file_prefix)
+
+        return filepath, jsonpath
+
+
+################################################################################
+
+
+class SummaryHistClass(_PlotTypeBaseClass):
+    def __init__(self, varname, casename, apply_log10, start_date, end_date):
+        self.metadata = dict()
+        self.metadata["plot_type"] = "histogram"
+        self.metadata["varname"] = varname
+        self.metadata["casename"] = casename
+        self.metadata["apply_log10"] = apply_log10
+        self.metadata["time_period"] = f"{start_date}_{end_date}"
+
+    def get_filepaths(self):
+        log_str = "" if not self.metadata["apply_log10"] else ".log10"
+        file_prefix = (
+            f"{self.metadata['varname']}.{self.metadata['time_period']}{log_str}"
+        )
         filepath = os.path.join(self.metadata["casename"], file_prefix)
         jsonpath = os.path.join(self.metadata["casename"], "metadata", file_prefix)
 

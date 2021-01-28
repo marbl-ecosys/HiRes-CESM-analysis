@@ -10,7 +10,7 @@ import cftime
 # local modules, not available through __init__
 from .utils import time_year_plus_frac, round_sig
 from .utils_units import conv_units
-from .PlotTypeClass import SummaryMapClass, SummaryTSClass
+from .PlotTypeClass import SummaryMapClass, SummaryTSClass, SummaryHistClass
 
 ################################################################################
 
@@ -196,16 +196,21 @@ def summary_plot_histogram(da, diag_metadata, lines_per_plot=12, **plot_options)
     hist_bins = 20
     hist_log = True
 
+    # Loop length
+    t_cnt = len(da["time"])
     for apply_log10 in _apply_log10_vals(diag_metadata):
         t_ind_beg = 0
-        for t_ind in range(len(da["time"])):
+        fig, ax = plt.subplots()
+        # fig.tight_layout()
+        for t_ind in range(t_cnt):
             to_plot = da.isel(time=t_ind)
             if "display_units" in diag_metadata:
                 to_plot = conv_units(to_plot, diag_metadata["display_units"])
             if apply_log10:
                 to_plot = np.log10(xr.where(to_plot > 0, to_plot, np.nan))
                 to_plot.name = f"log10({to_plot.name})"
-            to_plot.plot.hist(bins=hist_bins, log=hist_log, histtype="step")
+            # to_plot.plot.hist(bins=hist_bins, log=hist_log, histtype="step")
+            to_plot.plot.hist(ax=ax, bins=hist_bins, log=hist_log, histtype="step")
             if t_ind % lines_per_plot == lines_per_plot - 1:
                 t_beg = da.time.values[t_ind_beg]
                 t_str_beg = f"{t_beg.year:04}-{t_beg.month:02}-{t_beg.day:02}"
@@ -214,7 +219,17 @@ def summary_plot_histogram(da, diag_metadata, lines_per_plot=12, **plot_options)
                 t_str_end = f"{t_end.year:04}-{t_end.month:02}-{t_end.day:02}"
                 plt.title(f"Histogram: {t_str_beg} : {t_str_end}")
                 t_ind_beg = t_ind_end + 1
-                plt.show()
+                if save_pngs:
+                    summary_hist = SummaryHistClass(
+                        da.name, casename, apply_log10, t_str_beg, t_str_end
+                    )
+                    summary_hist.savefig(fig, root_dir=root_dir)
+                else:
+                    plt.show()
+                plt.close(fig)
+                if t_ind != t_cnt - 1:
+                    fig, ax = plt.subplots()
+
         if t_ind % lines_per_plot != lines_per_plot - 1:
             t_beg = da.time.values[t_ind_beg]
             t_str_beg = f"{t_beg.year:04}-{t_beg.month:02}-{t_beg.day:02}"
@@ -222,7 +237,14 @@ def summary_plot_histogram(da, diag_metadata, lines_per_plot=12, **plot_options)
             t_end = da.time.values[t_ind_end]
             t_str_end = f"{t_end.year:04}-{t_end.month:02}-{t_end.day:02}"
             plt.title(f"Histogram: {t_str_beg} : {t_str_end}")
-            plt.show()
+            if save_pngs:
+                start_date = f"{t_beg.item()}".split(" ")[0]
+                end_date = f"{t_end.item()}".split(" ")[0]
+                summary_hist = SummaryHistClass(da.name, casename, t_str_beg, t_str_end)
+                summary_hist.savefig(fig, root_dir=root_dir)
+            else:
+                plt.show()
+            plt.close(fig)
 
 
 ################################################################################
