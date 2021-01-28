@@ -133,6 +133,7 @@ def summary_plot_global_ts(
     if save_pngs:
         casename = plot_options["casename"]  # Required!
         root_dir = plot_options.get("root_dir", "images")
+        isel_dict = diag_metadata.get("isel_dict", {})
 
     reduce_dims = da.dims[-2:]
     weights = ds["TAREA"].fillna(0)
@@ -176,7 +177,9 @@ def summary_plot_global_ts(
     if save_pngs:
         first_datestamp = f"{da.time[0].data.item()}".split(" ")[0]
         last_datestamp = f"{da.time[-1].data.item()}".split(" ")[0]
-        summary_ts = SummaryTSClass(da.name, casename, first_datestamp, last_datestamp)
+        summary_ts = SummaryTSClass(
+            da, casename, first_datestamp, last_datestamp, isel_dict
+        )
         summary_ts.savefig(fig, root_dir=root_dir)
     else:
         plt.show()
@@ -191,6 +194,7 @@ def summary_plot_histogram(da, diag_metadata, lines_per_plot=12, **plot_options)
     if save_pngs:
         casename = plot_options["casename"]  # Required!
         root_dir = plot_options.get("root_dir", "images")
+        isel_dict = diag_metadata.get("isel_dict", {})
 
     # histogram, all time levels in one plot
     hist_bins = 20
@@ -221,7 +225,7 @@ def summary_plot_histogram(da, diag_metadata, lines_per_plot=12, **plot_options)
                 t_ind_beg = t_ind_end + 1
                 if save_pngs:
                     summary_hist = SummaryHistClass(
-                        da.name, casename, apply_log10, t_str_beg, t_str_end
+                        da, casename, apply_log10, t_str_beg, t_str_end, isel_dict
                     )
                     summary_hist.savefig(fig, root_dir=root_dir)
                 else:
@@ -240,7 +244,9 @@ def summary_plot_histogram(da, diag_metadata, lines_per_plot=12, **plot_options)
             if save_pngs:
                 start_date = f"{t_beg.item()}".split(" ")[0]
                 end_date = f"{t_end.item()}".split(" ")[0]
-                summary_hist = SummaryHistClass(da.name, casename, t_str_beg, t_str_end)
+                summary_hist = SummaryHistClass(
+                    da, casename, t_str_beg, t_str_end, isel_dict
+                )
                 summary_hist.savefig(fig, root_dir=root_dir)
             else:
                 plt.show()
@@ -256,6 +262,7 @@ def summary_plot_maps(da, diag_metadata, **plot_options):
     if save_pngs:
         casename = plot_options["casename"]  # Required!
         root_dir = plot_options.get("root_dir", "images")
+        isel_dict = diag_metadata.get("isel_dict", {})
 
     # maps, 1 plots for time level
     cmap = "plasma"
@@ -280,7 +287,9 @@ def summary_plot_maps(da, diag_metadata, **plot_options):
             fig = ax.get_figure()
             if save_pngs:
                 datestamp = f"{da.time[t_ind].data.item()}".split(" ")[0]
-                summary_map = SummaryMapClass(da.name, casename, datestamp, apply_log10)
+                summary_map = SummaryMapClass(
+                    da, casename, datestamp, apply_log10, isel_dict
+                )
                 summary_map.savefig(fig, root_dir=root_dir)
             else:
                 plt.show()
