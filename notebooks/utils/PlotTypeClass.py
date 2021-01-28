@@ -3,7 +3,7 @@ import os
 import pathlib
 
 
-class PlotTypeClass(object):
+class _PlotTypeBaseClass(object):
     def __init__(self):
         raise NotImplementedError("This must be implemented in child class")
 
@@ -27,7 +27,9 @@ class PlotTypeClass(object):
         metadata["filepath"] = os.path.join(
             root_dir, self.metadata["plot_type"], f"{filepath}.png"
         )
-        jsonpath = os.path.join(root_dir, self.metadata["plot_type"], jsonpath)
+        jsonpath = os.path.join(
+            root_dir, self.metadata["plot_type"], f"{jsonpath}.json"
+        )
 
         for path in [metadata["filepath"], jsonpath]:
             parent_dir = pathlib.Path(path).parent
@@ -41,7 +43,7 @@ class PlotTypeClass(object):
 ################################################################################
 
 
-class SummaryMapClass(PlotTypeClass):
+class SummaryMapClass(_PlotTypeBaseClass):
     def __init__(self, varname, casename, datestamp, apply_log10):
         self.metadata = dict()
         self.metadata["plot_type"] = "summary_map"
@@ -52,13 +54,27 @@ class SummaryMapClass(PlotTypeClass):
 
     def get_filepaths(self):
         log_str = "" if not self.metadata["apply_log10"] else ".log10"
-        filepath = os.path.join(
-            self.metadata["casename"],
-            f"{self.metadata['varname']}.{self.metadata['date']}{log_str}",
-        )
-        jsonpath = os.path.join(
-            self.metadata["casename"],
-            "metadata",
-            f"{self.metadata['varname']}.{self.metadata['date']}{log_str}",
-        )
+        file_prefix = f"{self.metadata['varname']}.{self.metadata['date']}{log_str}"
+        filepath = os.path.join(self.metadata["casename"], file_prefix)
+        jsonpath = os.path.join(self.metadata["casename"], "metadata", file_prefix)
+
+        return filepath, jsonpath
+
+
+################################################################################
+
+
+class SummaryTSClass(_PlotTypeBaseClass):
+    def __init__(self, varname, casename, start_date, end_date):
+        self.metadata = dict()
+        self.metadata["plot_type"] = "time_series"
+        self.metadata["varname"] = varname
+        self.metadata["casename"] = casename
+        self.metadata["time_period"] = f"{start_date}_{end_date}"
+
+    def get_filepaths(self):
+        file_prefix = f"{self.metadata['varname']}.{self.metadata['time_period']}"
+        filepath = os.path.join(self.metadata["casename"], file_prefix)
+        jsonpath = os.path.join(self.metadata["casename"], "metadata", file_prefix)
+
         return filepath, jsonpath

@@ -10,7 +10,7 @@ import cftime
 # local modules, not available through __init__
 from .utils import time_year_plus_frac, round_sig
 from .utils_units import conv_units
-from .PlotTypeClass import SummaryMapClass
+from .PlotTypeClass import SummaryMapClass, SummaryTSClass
 
 ################################################################################
 
@@ -126,7 +126,14 @@ def _extract_field_from_file(ds, varname, nlat, nlon):
 ################################################################################
 
 
-def summary_plot_global_ts(ds, da, diag_metadata, time_coarsen_len=None):
+def summary_plot_global_ts(
+    ds, da, diag_metadata, time_coarsen_len=None, **plot_options
+):
+    save_pngs = plot_options.get("save_pngs", False)
+    if save_pngs:
+        casename = plot_options["casename"]  # Required!
+        root_dir = plot_options.get("root_dir", "images")
+
     reduce_dims = da.dims[-2:]
     weights = ds["TAREA"].fillna(0)
     da_weighted = da.weighted(weights)
@@ -166,13 +173,25 @@ def summary_plot_global_ts(ds, da, diag_metadata, time_coarsen_len=None):
             title += ", "
         title += f"last mean value={round_sig(to_plot_coarse.values[-1],4)}"
         ax.set_title(title)
-    plt.show()
+    if save_pngs:
+        first_datestamp = f"{da.time[0].data.item()}".split(" ")[0]
+        last_datestamp = f"{da.time[-1].data.item()}".split(" ")[0]
+        summary_ts = SummaryTSClass(da.name, casename, first_datestamp, last_datestamp)
+        summary_ts.savefig(fig, root_dir=root_dir)
+    else:
+        plt.show()
+    plt.close(fig)
 
 
 ################################################################################
 
 
-def summary_plot_histogram(da, diag_metadata, lines_per_plot=12):
+def summary_plot_histogram(da, diag_metadata, lines_per_plot=12, **plot_options):
+    save_pngs = plot_options.get("save_pngs", False)
+    if save_pngs:
+        casename = plot_options["casename"]  # Required!
+        root_dir = plot_options.get("root_dir", "images")
+
     # histogram, all time levels in one plot
     hist_bins = 20
     hist_log = True
@@ -215,6 +234,7 @@ def summary_plot_maps(da, diag_metadata, **plot_options):
     if save_pngs:
         casename = plot_options["casename"]  # Required!
         root_dir = plot_options.get("root_dir", "images")
+
     # maps, 1 plots for time level
     cmap = "plasma"
 
