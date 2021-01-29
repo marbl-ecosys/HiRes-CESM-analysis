@@ -23,7 +23,12 @@ class _PlotTypeBaseClass(object):
         isel_list = []
         for varname in isel_dict:
             value = da[varname].data
-            isel_list.append(f"{varname}--{value:.2f}")
+            try:
+                # Use two digits after decimal for floats
+                isel_list.append(f"{varname}--{value:.2f}")
+            except:
+                # Otherwise just include the variable value (e.g. strings)
+                isel_list.append(f"{varname}--{value}")
         isel_str = "__".join(isel_list)
         if len(isel_str) > 0:
             isel_str = "." + isel_str
@@ -125,6 +130,52 @@ class SummaryHistClass(_PlotTypeBaseClass):
     def get_filepaths(self):
         log_str = "" if not self.metadata["apply_log10"] else ".log10"
         file_prefix = f"{self.metadata['varname']}.{self.metadata['time_period']}{self.isel_str}{log_str}"
+        filepath = os.path.join(self.metadata["casename"], file_prefix)
+        jsonpath = os.path.join(self.metadata["casename"], "metadata", file_prefix)
+
+        return filepath, jsonpath
+
+
+################################################################################
+
+
+class TrendMapClass(_PlotTypeBaseClass):
+    def __init__(self, da, casename, start_date, end_date, isel_dict):
+        self.metadata = dict()
+        self.metadata["plot_type"] = "trend_map"
+        self.metadata["varname"] = da.name
+        self.metadata["casename"] = casename
+        self.metadata["time_period"] = f"{start_date}_{end_date}"
+        self.metadata["isel_dict"] = isel_dict
+        self.isel_str = self.get_isel_str(da, isel_dict)
+
+    def get_filepaths(self):
+        file_prefix = (
+            f"{self.metadata['varname']}.{self.metadata['time_period']}{self.isel_str}"
+        )
+        filepath = os.path.join(self.metadata["casename"], file_prefix)
+        jsonpath = os.path.join(self.metadata["casename"], "metadata", file_prefix)
+
+        return filepath, jsonpath
+
+
+################################################################################
+
+
+class TrendHistClass(_PlotTypeBaseClass):
+    def __init__(self, da, casename, start_date, end_date, isel_dict):
+        self.metadata = dict()
+        self.metadata["plot_type"] = "trend_hist"
+        self.metadata["varname"] = da.name
+        self.metadata["casename"] = casename
+        self.metadata["time_period"] = f"{start_date}_{end_date}"
+        self.metadata["isel_dict"] = isel_dict
+        self.isel_str = self.get_isel_str(da, isel_dict)
+
+    def get_filepaths(self):
+        file_prefix = (
+            f"{self.metadata['varname']}.{self.metadata['time_period']}{self.isel_str}"
+        )
         filepath = os.path.join(self.metadata["casename"], file_prefix)
         jsonpath = os.path.join(self.metadata["casename"], "metadata", file_prefix)
 

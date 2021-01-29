@@ -10,7 +10,13 @@ import cftime
 # local modules, not available through __init__
 from .utils import time_year_plus_frac, round_sig
 from .utils_units import conv_units
-from .PlotTypeClass import SummaryMapClass, SummaryTSClass, SummaryHistClass
+from .PlotTypeClass import (
+    SummaryMapClass,
+    SummaryTSClass,
+    SummaryHistClass,
+    TrendMapClass,
+    TrendHistClass,
+)
 
 ################################################################################
 
@@ -299,7 +305,18 @@ def summary_plot_maps(da, diag_metadata, **plot_options):
 ################################################################################
 
 
-def trend_plot(da, vmin=None, vmax=None, invert_yaxis=False):
+def trend_plot(da, vmin=None, vmax=None, invert_yaxis=False, **plot_options):
+
+    save_pngs = plot_options.get("save_pngs", False)
+    if save_pngs:
+        casename = plot_options["casename"]  # Required!
+        root_dir = plot_options.get("root_dir", "images")
+        isel_dict = plot_options.get("isel_dict", {})
+        t_beg = da.time.values[0]
+        t_str_beg = f"{t_beg.year:04}-{t_beg.month:02}-{t_beg.day:02}"
+        t_end = da.time.values[-1]
+        t_str_end = f"{t_end.year:04}-{t_end.month:02}-{t_end.day:02}"
+
     trend = da.polyfit("time", 1).polyfit_coefficients.sel(degree=1)
     trend.name = da.name + " Trend"
     trend.attrs["long_name"] = da.attrs["long_name"] + " Trend"
@@ -310,18 +327,25 @@ def trend_plot(da, vmin=None, vmax=None, invert_yaxis=False):
 
     fig, ax = plt.subplots()
     trend.plot.hist(bins=20, log=True, ax=ax)
-    ax.set_title(da._title_for_slice())
-    plt.show()
+    plt.title(da._title_for_slice())
+    if save_pngs:
+        trend_hist = TrendHistClass(da, casename, t_str_beg, t_str_end, isel_dict)
+        trend_hist.savefig(fig, root_dir=root_dir)
+    else:
+        plt.show()
+    plt.close(fig)
 
     fig, ax = plt.subplots()
     trend.plot.pcolormesh(cmap="plasma", vmin=vmin, vmax=vmax, ax=ax)
-    ax.set_title(da._title_for_slice())
+    plt.title(da._title_for_slice())
     if invert_yaxis:
         ax.invert_yaxis()
-    plt.show()
-
-
-################################################################################
+    if save_pngs:
+        trend_map = TrendMapClass(da, casename, t_str_beg, t_str_end, isel_dict)
+        trend_map.savefig(fig, root_dir=root_dir)
+    else:
+        plt.show()
+    plt.close(fig)
 
 
 ################################################################################
