@@ -1,5 +1,6 @@
 """utility functions"""
 
+import hashlib
 import math
 
 import cftime
@@ -212,3 +213,102 @@ def print_key_metadata(ds, msg=None):
         print("ds['time']." + attr_name)
         print(getattr(ds["time"], attr_name))
         print(32 * "*")
+
+
+################################################################################
+
+
+def propagate_coord_bounds(ds, ds_in):
+    """
+    propagate coordinate bounds from ds_in to ds
+    return modified Dataset
+    """
+
+    for varname in ds.coords:
+        if "bounds" in ds.coords[varname].attrs:
+            bounds_name = ds.coords[varname].attrs["bounds"]
+            if bounds_name not in ds and bounds_name in ds_in:
+                ds[bounds_name] = ds_in[bounds_name]
+
+    return ds
+
+
+################################################################################
+
+
+def to_netcdf_prep(ds, ds_in=None):
+    """
+    prep Dataset for saving to a netCDF file
+    return modified Dataset
+
+    prepping consists of:
+        propagate common encodings from ds_in
+        modify ds to make it more friendly to external tools
+        ensure unlimited dims are first
+    """
+
+    if ds_in is not None:
+        dict_copy_vals(ds_in.encoding, ds.encoding, "unlimited_dims")
+        if "time" in ds and "time" in ds_in:
+            dict_copy_vals(
+                ds_in["time"].encoding,
+                ds["time"].encoding,
+                ["dtype", "_FillValue", "units", "calendar"],
+            )
+
+    for var_dict in [ds.data_vars, ds.coords]:
+        for varname in var_dict:
+            # avoid adding NaN _FillValue
+            if "_FillValue" not in var_dict[varname].encoding:
+                var_dict[varname].encoding["_FillValue"] = None
+            # avoid int64
+            if var_dict[varname].dtype == "int64":
+                var_dict[varname].encoding["dtype"] = "int32"
+
+    if "unlimited_dims" in ds.encoding:
+        dims = ds.encoding["unlimited_dims"]
+        ds = ds.transpose(*dims, ...)
+
+    return ds
+
+
+################################################################################
+
+
+def gen_hash(obj, hash_obj=None, ret_digest=True):
+    """
+    generate a deterministic hash of obj
+
+    If hash_obj is not None, it is updated using obj. A new hash_obj is created
+    otherwise. If ret_digest is True, the hexdigest of the computed hash is returned.
+    The hash object is returned otherwise.
+    """
+
+    if hash_obj is None:
+        hash_obj = hashlib.sha256()
+
+    implemented = False
+
+    if type(obj) == list:
+        implemented = True
+        for val in obj:
+            hash_obj = gen_hash(val, hash_obj=hash_obj, ret_digest=False)
+
+    if type(obj) == str:
+        implemented = True
+        hash_obj.update(obj.encode())
+
+    if type(obj) in [bool, int, float]:
+        implemented = True
+        hash_obj.update(str(obj).encode())
+
+    if type(obj) == np.ndarray:
+        implemented = True
+        hash_obj.update(obj.tobytes())
+
+    if not implemented:
+        raise NotImplementedError(f"type={type(obj)}")
+
+    if ret_digest:
+        return hash_obj.hexdigest()
+    return hash_obj
