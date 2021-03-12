@@ -4,10 +4,10 @@ import pathlib
 
 
 class _PlotTypeBaseClass(object):
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         raise NotImplementedError("This must be implemented in child class")
 
-    def get_filepaths(self):
+    def get_filepaths(self, *args, **kwargs):
         raise NotImplementedError("This must be implemented in child class")
 
     def get_isel_str(self, da, isel_dict):
@@ -52,17 +52,23 @@ class _PlotTypeBaseClass(object):
         metadata = self.metadata
         filepath, jsonpath = self.get_filepaths()
         metadata["filepath"] = os.path.join(
-            root_dir, self.metadata["plot_type"], f"{filepath}.png"
+            self.metadata["plot_type"], f"{filepath}.png"
+        )
+        filepath = os.path.join(
+            root_dir, self.metadata["casename"], metadata["filepath"]
         )
         jsonpath = os.path.join(
-            root_dir, self.metadata["plot_type"], f"{jsonpath}.json"
+            root_dir,
+            self.metadata["casename"],
+            self.metadata["plot_type"],
+            f"{jsonpath}.json",
         )
 
-        for path in [metadata["filepath"], jsonpath]:
+        for path in [filepath, jsonpath]:
             parent_dir = pathlib.Path(path).parent
             parent_dir.mkdir(parents=True, exist_ok=True)
 
-        fig.savefig(metadata["filepath"])
+        fig.savefig(filepath)
         with open(jsonpath, "w") as fp:
             json.dump(metadata, fp)
 
@@ -84,8 +90,8 @@ class SummaryMapClass(_PlotTypeBaseClass):
     def get_filepaths(self):
         log_str = "" if not self.metadata["apply_log10"] else ".log10"
         file_prefix = f"{self.metadata['varname']}.{self.metadata['date']}{self.isel_str}{log_str}"
-        filepath = os.path.join(self.metadata["casename"], file_prefix)
-        jsonpath = os.path.join(self.metadata["casename"], "metadata", file_prefix)
+        filepath = file_prefix
+        jsonpath = os.path.join("metadata", file_prefix)
 
         return filepath, jsonpath
 
@@ -107,8 +113,8 @@ class SummaryTSClass(_PlotTypeBaseClass):
         file_prefix = (
             f"{self.metadata['varname']}.{self.metadata['time_period']}{self.isel_str}"
         )
-        filepath = os.path.join(self.metadata["casename"], file_prefix)
-        jsonpath = os.path.join(self.metadata["casename"], "metadata", file_prefix)
+        filepath = file_prefix
+        jsonpath = os.path.join("metadata", file_prefix)
 
         return filepath, jsonpath
 
@@ -130,8 +136,8 @@ class SummaryHistClass(_PlotTypeBaseClass):
     def get_filepaths(self):
         log_str = "" if not self.metadata["apply_log10"] else ".log10"
         file_prefix = f"{self.metadata['varname']}.{self.metadata['time_period']}{self.isel_str}{log_str}"
-        filepath = os.path.join(self.metadata["casename"], file_prefix)
-        jsonpath = os.path.join(self.metadata["casename"], "metadata", file_prefix)
+        filepath = file_prefix
+        jsonpath = os.path.join("metadata", file_prefix)
 
         return filepath, jsonpath
 
@@ -153,8 +159,8 @@ class TrendMapClass(_PlotTypeBaseClass):
         file_prefix = (
             f"{self.metadata['varname']}.{self.metadata['time_period']}{self.isel_str}"
         )
-        filepath = os.path.join(self.metadata["casename"], file_prefix)
-        jsonpath = os.path.join(self.metadata["casename"], "metadata", file_prefix)
+        filepath = os.path.join(file_prefix)
+        jsonpath = os.path.join("metadata", file_prefix)
 
         return filepath, jsonpath
 
@@ -176,7 +182,7 @@ class TrendHistClass(_PlotTypeBaseClass):
         file_prefix = (
             f"{self.metadata['varname']}.{self.metadata['time_period']}{self.isel_str}"
         )
-        filepath = os.path.join(self.metadata["casename"], file_prefix)
-        jsonpath = os.path.join(self.metadata["casename"], "metadata", file_prefix)
+        filepath = os.path.join(file_prefix)
+        jsonpath = os.path.join("metadata", file_prefix)
 
         return filepath, jsonpath
