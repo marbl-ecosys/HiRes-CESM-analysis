@@ -1,0 +1,5 @@
+hvplot
+jupyterlab
+s3fs
+psutil
+git+https://github.com/andersy005/panelify.git
