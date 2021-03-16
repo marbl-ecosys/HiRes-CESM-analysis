@@ -56,4 +56,4 @@ dependencies:
     - zarr
     - pip:
         - ncar-jobqueue
-        - .. -r requirements.txt
+        - -r file:../requirements.txt
