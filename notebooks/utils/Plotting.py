@@ -140,6 +140,7 @@ def summary_plot_global_ts(
     if save_pngs:
         casename = plot_options["casename"]  # Required!
         root_dir = plot_options.get("root_dir", "images")
+        kwargs = plot_options.get("savefig_kwargs", {})
         isel_dict = diag_metadata.get("isel_dict", {})
 
     reduce_dims = da.dims[-2:]
@@ -189,7 +190,7 @@ def summary_plot_global_ts(
         summary_ts = SummaryTSClass(
             da, casename, first_datestamp, last_datestamp, isel_dict
         )
-        summary_ts.savefig(fig, root_dir=root_dir)
+        summary_ts.savefig(fig, root_dir=root_dir, **kwargs)
     else:
         plt.show()
     plt.close(fig)
@@ -203,6 +204,7 @@ def summary_plot_histogram(ds, da, diag_metadata, lines_per_plot=12, **plot_opti
     if save_pngs:
         casename = plot_options["casename"]  # Required!
         root_dir = plot_options.get("root_dir", "images")
+        kwargs = plot_options.get("savefig_kwargs", {})
         isel_dict = diag_metadata.get("isel_dict", {})
 
     # histogram, all time levels in one plot
@@ -236,7 +238,7 @@ def summary_plot_histogram(ds, da, diag_metadata, lines_per_plot=12, **plot_opti
                     summary_hist = SummaryHistClass(
                         da, casename, apply_log10, t_str_beg, t_str_end, isel_dict
                     )
-                    summary_hist.savefig(fig, root_dir=root_dir)
+                    summary_hist.savefig(fig, root_dir=root_dir, **kwargs)
                 else:
                     plt.show()
                 plt.close(fig)
@@ -254,7 +256,7 @@ def summary_plot_histogram(ds, da, diag_metadata, lines_per_plot=12, **plot_opti
                 summary_hist = SummaryHistClass(
                     da, casename, t_str_beg, t_str_end, isel_dict
                 )
-                summary_hist.savefig(fig, root_dir=root_dir)
+                summary_hist.savefig(fig, root_dir=root_dir, **kwargs)
             else:
                 plt.show()
             plt.close(fig)

@@ -34,7 +34,7 @@ class _PlotTypeBaseClass(object):
             isel_str = "." + isel_str
         return isel_str
 
-    def savefig(self, fig, root_dir="images"):
+    def savefig(self, fig, root_dir="images", **kwargs):
         """
             Saves fig as a PNG, with the file name determined by the other parameters.
 
@@ -68,7 +68,7 @@ class _PlotTypeBaseClass(object):
             parent_dir = pathlib.Path(path).parent
             parent_dir.mkdir(parents=True, exist_ok=True)
 
-        fig.savefig(filepath)
+        fig.savefig(filepath, **kwargs)
         with open(jsonpath, "w") as fp:
             json.dump(metadata, fp)
 
