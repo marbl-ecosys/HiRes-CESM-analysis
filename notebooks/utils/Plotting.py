@@ -271,6 +271,7 @@ def summary_plot_maps(da, diag_metadata, **plot_options):
     if save_pngs:
         casename = plot_options["casename"]  # Required!
         root_dir = plot_options.get("root_dir", "images")
+        kwargs = plot_options.get("savefig_kwargs", {})
         isel_dict = diag_metadata.get("isel_dict", {})
 
     # maps, 1 plots for time level
@@ -299,7 +300,7 @@ def summary_plot_maps(da, diag_metadata, **plot_options):
                 summary_map = SummaryMapClass(
                     da, casename, datestamp, apply_log10, isel_dict
                 )
-                summary_map.savefig(fig, root_dir=root_dir)
+                summary_map.savefig(fig, root_dir=root_dir, **kwargs)
             else:
                 plt.show()
             plt.close(fig)
@@ -314,6 +315,7 @@ def trend_plot(ds, da, vmin=None, vmax=None, invert_yaxis=False, **plot_options)
     if save_pngs:
         casename = plot_options["casename"]  # Required!
         root_dir = plot_options.get("root_dir", "images")
+        kwargs = plot_options.get("savefig_kwargs", {})
         isel_dict = plot_options.get("isel_dict", {})
         t_beg = ds.time_bound.values[0, 0]
         t_str_beg = f"{t_beg.year:04}-{t_beg.month:02}-{t_beg.day:02}"
@@ -333,7 +335,7 @@ def trend_plot(ds, da, vmin=None, vmax=None, invert_yaxis=False, **plot_options)
     plt.title(da._title_for_slice())
     if save_pngs:
         trend_hist = TrendHistClass(da, casename, t_str_beg, t_str_end, isel_dict)
-        trend_hist.savefig(fig, root_dir=root_dir)
+        trend_hist.savefig(fig, root_dir=root_dir, **kwargs)
     else:
         plt.show()
     plt.close(fig)
@@ -345,7 +347,7 @@ def trend_plot(ds, da, vmin=None, vmax=None, invert_yaxis=False, **plot_options)
         ax.invert_yaxis()
     if save_pngs:
         trend_map = TrendMapClass(da, casename, t_str_beg, t_str_end, isel_dict)
-        trend_map.savefig(fig, root_dir=root_dir)
+        trend_map.savefig(fig, root_dir=root_dir, **kwargs)
     else:
         plt.show()
     plt.close(fig)
