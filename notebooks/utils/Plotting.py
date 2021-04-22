@@ -136,9 +136,9 @@ def _extract_field_from_file(ds, varname, nlat, nlon):
 def summary_plot_global_ts(
     ds, da, diag_metadata, time_coarsen_len=None, **plot_options
 ):
+    casename = ds.attrs["title"]
     save_pngs = plot_options.get("save_pngs", False)
     if save_pngs:
-        casename = plot_options["casename"]  # Required!
         root_dir = plot_options.get("root_dir", "images")
         kwargs = plot_options.get("savefig_kwargs", {})
         isel_dict = diag_metadata.get("isel_dict", {})
@@ -183,9 +183,11 @@ def summary_plot_global_ts(
         title += f"last mean value={round_sig(to_plot_coarse.values[-1],4)}"
         ax.set_title(title)
     if save_pngs:
-        str_datestamp = f'{ds["time_bound"].load().data[0,0]}'
+        str_datestamp = f'{ds[ds["time"].attrs["bounds"]].load().data[0,0]}'
         first_datestamp = str_datestamp.split(" ")[0]
-        str_datestamp = f'{ds["time_bound"].data[-1,-1]-datetime.timedelta(days=1)}'
+        str_datestamp = (
+            f'{ds[ds["time"].attrs["bounds"]].data[-1,-1]-datetime.timedelta(days=1)}'
+        )
         last_datestamp = str_datestamp.split(" ")[0]
         summary_ts = SummaryTSClass(
             da, casename, first_datestamp, last_datestamp, isel_dict
@@ -201,8 +203,8 @@ def summary_plot_global_ts(
 
 def summary_plot_histogram(ds, da, diag_metadata, lines_per_plot=12, **plot_options):
     save_pngs = plot_options.get("save_pngs", False)
+    casename = ds.attrs["title"]
     if save_pngs:
-        casename = plot_options["casename"]  # Required!
         root_dir = plot_options.get("root_dir", "images")
         kwargs = plot_options.get("savefig_kwargs", {})
         isel_dict = diag_metadata.get("isel_dict", {})
@@ -227,10 +229,12 @@ def summary_plot_histogram(ds, da, diag_metadata, lines_per_plot=12, **plot_opti
             # to_plot.plot.hist(bins=hist_bins, log=hist_log, histtype="step")
             to_plot.plot.hist(ax=ax, bins=hist_bins, log=hist_log, histtype="step")
             if t_ind % lines_per_plot == lines_per_plot - 1:
-                t_beg = ds.time_bound.values[t_ind_beg, 0]
+                t_beg = ds[ds["time"].attrs["bounds"]].values[t_ind_beg, 0]
                 t_str_beg = f"{t_beg.year:04}-{t_beg.month:02}-{t_beg.day:02}"
                 t_ind_end = t_ind
-                t_end = ds.time_bound.values[t_ind_end, -1] - datetime.timedelta(days=1)
+                t_end = ds[ds["time"].attrs["bounds"]].values[
+                    t_ind_end, -1
+                ] - datetime.timedelta(days=1)
                 t_str_end = f"{t_end.year:04}-{t_end.month:02}-{t_end.day:02}"
                 plt.title(f"Histogram: {t_str_beg} : {t_str_end}")
                 t_ind_beg = t_ind_end + 1
@@ -246,10 +250,12 @@ def summary_plot_histogram(ds, da, diag_metadata, lines_per_plot=12, **plot_opti
                     fig, ax = plt.subplots()
 
         if t_ind % lines_per_plot != lines_per_plot - 1:
-            t_beg = ds.time_bound.values[t_ind_beg, 0]
+            t_beg = ds[ds["time"].attrs["bounds"]].values[t_ind_beg, 0]
             t_str_beg = f"{t_beg.year:04}-{t_beg.month:02}-{t_beg.day:02}"
             t_ind_end = t_ind
-            t_end = ds.time_bound.values[t_ind_end, -1] - datetime.timedelta(days=1)
+            t_end = ds[ds["time"].attrs["bounds"]].values[
+                t_ind_end, -1
+            ] - datetime.timedelta(days=1)
             t_str_end = f"{t_end.year:04}-{t_end.month:02}-{t_end.day:02}"
             plt.title(f"Histogram: {t_str_beg} : {t_str_end}")
             if save_pngs:
@@ -265,11 +271,11 @@ def summary_plot_histogram(ds, da, diag_metadata, lines_per_plot=12, **plot_opti
 ################################################################################
 
 
-def summary_plot_maps(da, diag_metadata, **plot_options):
+def summary_plot_maps(ds, da, diag_metadata, **plot_options):
 
     save_pngs = plot_options.get("save_pngs", False)
+    casename = ds.attrs["title"]
     if save_pngs:
-        casename = plot_options["casename"]  # Required!
         root_dir = plot_options.get("root_dir", "images")
         kwargs = plot_options.get("savefig_kwargs", {})
         isel_dict = diag_metadata.get("isel_dict", {})
@@ -312,14 +318,16 @@ def summary_plot_maps(da, diag_metadata, **plot_options):
 def trend_plot(ds, da, vmin=None, vmax=None, invert_yaxis=False, **plot_options):
 
     save_pngs = plot_options.get("save_pngs", False)
+    casename = ds.attrs["title"]
     if save_pngs:
-        casename = plot_options["casename"]  # Required!
         root_dir = plot_options.get("root_dir", "images")
         kwargs = plot_options.get("savefig_kwargs", {})
         isel_dict = plot_options.get("isel_dict", {})
-        t_beg = ds.time_bound.values[0, 0]
+        t_beg = ds[ds["time"].attrs["bounds"]].values[0, 0]
         t_str_beg = f"{t_beg.year:04}-{t_beg.month:02}-{t_beg.day:02}"
-        t_end = ds.time_bound.values[-1, -1] - datetime.timedelta(days=1)
+        t_end = ds[ds["time"].attrs["bounds"]].values[-1, -1] - datetime.timedelta(
+            days=1
+        )
         t_str_end = f"{t_end.year:04}-{t_end.month:02}-{t_end.day:02}"
 
     trend = da.polyfit("time", 1).polyfit_coefficients.sel(degree=1)

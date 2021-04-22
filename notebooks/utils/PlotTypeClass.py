@@ -84,7 +84,7 @@ class SummaryMapClass(_PlotTypeBaseClass):
         self.metadata["casename"] = casename
         self.metadata["date"] = datestamp
         self.metadata["apply_log10"] = apply_log10
-        self.metadata["reduced_dims"] = dict()
+        self.metadata["sel_dict"] = dict()
         for varname in isel_dict:
             value = da[varname].data
             try:
@@ -93,7 +93,7 @@ class SummaryMapClass(_PlotTypeBaseClass):
             except:
                 # Otherwise just include the variable value (e.g. strings)
                 str_val = f"{value}"
-            self.metadata["reduced_dims"][varname] = str_val
+            self.metadata["sel_dict"][varname] = str_val
         self.isel_str = self.get_isel_str(da, isel_dict)
 
     def get_filepaths(self):
@@ -115,7 +115,7 @@ class SummaryTSClass(_PlotTypeBaseClass):
         self.metadata["varname"] = da.name
         self.metadata["casename"] = casename
         self.metadata["time_period"] = f"{start_date}_{end_date}"
-        self.metadata["reduced_dims"] = dict()
+        self.metadata["sel_dict"] = dict()
         for varname in isel_dict:
             value = da[varname].data
             try:
@@ -124,7 +124,7 @@ class SummaryTSClass(_PlotTypeBaseClass):
             except:
                 # Otherwise just include the variable value (e.g. strings)
                 str_val = f"{value}"
-            self.metadata["reduced_dims"][varname] = str_val
+            self.metadata["sel_dict"][varname] = str_val
         self.isel_str = self.get_isel_str(da, isel_dict)
 
     def get_filepaths(self):
@@ -148,7 +148,7 @@ class SummaryHistClass(_PlotTypeBaseClass):
         self.metadata["casename"] = casename
         self.metadata["apply_log10"] = apply_log10
         self.metadata["time_period"] = f"{start_date}_{end_date}"
-        self.metadata["reduced_dims"] = dict()
+        self.metadata["sel_dict"] = dict()
         for varname in isel_dict:
             value = da[varname].data
             try:
@@ -157,7 +157,7 @@ class SummaryHistClass(_PlotTypeBaseClass):
             except:
                 # Otherwise just include the variable value (e.g. strings)
                 str_val = f"{value}"
-            self.metadata["reduced_dims"][varname] = str_val
+            self.metadata["sel_dict"][varname] = str_val
         self.isel_str = self.get_isel_str(da, isel_dict)
 
     def get_filepaths(self):
@@ -179,7 +179,7 @@ class TrendMapClass(_PlotTypeBaseClass):
         self.metadata["varname"] = da.name
         self.metadata["casename"] = casename
         self.metadata["time_period"] = f"{start_date}_{end_date}"
-        self.metadata["reduced_dims"] = dict()
+        self.metadata["sel_dict"] = dict()
         for varname in isel_dict:
             value = da[varname].data
             try:
@@ -188,7 +188,7 @@ class TrendMapClass(_PlotTypeBaseClass):
             except:
                 # Otherwise just include the variable value (e.g. strings)
                 str_val = f"{value}"
-            self.metadata["reduced_dims"][varname] = str_val
+            self.metadata["sel_dict"][varname] = str_val
         self.isel_str = self.get_isel_str(da, isel_dict)
 
     def get_filepaths(self):
@@ -211,7 +211,7 @@ class TrendHistClass(_PlotTypeBaseClass):
         self.metadata["varname"] = da.name
         self.metadata["casename"] = casename
         self.metadata["time_period"] = f"{start_date}_{end_date}"
-        self.metadata["reduced_dims"] = dict()
+        self.metadata["sel_dict"] = dict()
         for varname in isel_dict:
             value = da[varname].data
             try:
@@ -220,7 +220,7 @@ class TrendHistClass(_PlotTypeBaseClass):
             except:
                 # Otherwise just include the variable value (e.g. strings)
                 str_val = f"{value}"
-            self.metadata["reduced_dims"][varname] = str_val
+            self.metadata["sel_dict"][varname] = str_val
         self.isel_str = self.get_isel_str(da, isel_dict)
 
     def get_filepaths(self):
