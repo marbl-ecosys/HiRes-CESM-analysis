@@ -386,7 +386,7 @@ class CaseClass(object):
                     self._dataset_files[stream][year] = dict()
                     self._dataset_src[stream][year] = dict()
                 self._dataset_files[stream][year][varname] = self.get_timeseries_files(
-                    year, stream, varnames
+                    year, stream, varname
                 )
                 if self._dataset_files[stream][year][varname]:
                     self._dataset_src[stream][year][varname] = "time series"

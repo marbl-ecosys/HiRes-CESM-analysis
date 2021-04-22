@@ -2,3 +2,14 @@
 **/__pycache__
 notebooks/logs
 data_reshaping/logs
+
+# ignore images directory, except for the image catalog
+# complicated, but it works... https://stackoverflow.com/a/16318111
+notebooks/images/*
+!notebooks/images/g.e22.G1850ECO_JRA_HR.TL319_t13.003
+!notebooks/images/g.e22.G1850ECO_JRA_HR.TL319_t13.004
+!notebooks/images/g.e22b05.G1850ECOIAF_JRA.TL319_g17.cocco.001
+notebooks/images/g.e22.G1850ECO_JRA_HR.TL319_t13.003/*
+notebooks/images/g.e22.G1850ECO_JRA_HR.TL319_t13.004/*
+notebooks/images/g.e22b05.G1850ECOIAF_JRA.TL319_g17.cocco.001/*
+!notebooks/images/*/png_catalog.csv

@@ -6,15 +6,25 @@ import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
 import cftime
+import datetime
 
 # local modules, not available through __init__
 from .utils import time_year_plus_frac, round_sig
 from .utils_units import conv_units
+from .PlotTypeClass import (
+    SummaryMapClass,
+    SummaryTSClass,
+    SummaryHistClass,
+    TrendMapClass,
+    TrendHistClass,
+)
 
 ################################################################################
 
 
-def compare_fields_at_lat_lon(list_of_das_in, nlat, nlon, individual_plots=False):
+def compare_fields_at_lat_lon(
+    list_of_das_in, nlat, nlon, individual_plots=False, filename=None
+):
 
     # This shouldn't be hard-coded... but how else to get?
     xticks = 365 + np.array([0, 31, 59, 90, 120, 151])
@@ -69,6 +79,9 @@ def compare_fields_at_lat_lon(list_of_das_in, nlat, nlon, individual_plots=False
         plt.yticks(yticks)
         plt.xlabel("Date (year 0001)")
 
+    if filename:
+        fig.savefig(filename)
+
     return fig
 
 
@@ -120,7 +133,16 @@ def _extract_field_from_file(ds, varname, nlat, nlon):
 ################################################################################
 
 
-def summary_plot_global_ts(ds, da, diag_metadata, time_coarsen_len=None):
+def summary_plot_global_ts(
+    ds, da, diag_metadata, time_coarsen_len=None, **plot_options
+):
+    casename = ds.attrs["title"]
+    save_pngs = plot_options.get("save_pngs", False)
+    if save_pngs:
+        root_dir = plot_options.get("root_dir", "images")
+        kwargs = plot_options.get("savefig_kwargs", {})
+        isel_dict = diag_metadata.get("isel_dict", {})
+
     reduce_dims = da.dims[-2:]
     weights = ds["TAREA"].fillna(0)
     da_weighted = da.weighted(weights)
@@ -160,50 +182,104 @@ def summary_plot_global_ts(ds, da, diag_metadata, time_coarsen_len=None):
             title += ", "
         title += f"last mean value={round_sig(to_plot_coarse.values[-1],4)}"
         ax.set_title(title)
-    plt.show()
+    if save_pngs:
+        str_datestamp = f'{ds[ds["time"].attrs["bounds"]].load().data[0,0]}'
+        first_datestamp = str_datestamp.split(" ")[0]
+        str_datestamp = (
+            f'{ds[ds["time"].attrs["bounds"]].data[-1,-1]-datetime.timedelta(days=1)}'
+        )
+        last_datestamp = str_datestamp.split(" ")[0]
+        summary_ts = SummaryTSClass(
+            da, casename, first_datestamp, last_datestamp, isel_dict
+        )
+        summary_ts.savefig(fig, root_dir=root_dir, **kwargs)
+    else:
+        plt.show()
+    plt.close(fig)
 
 
 ################################################################################
 
 
-def summary_plot_histogram(da, diag_metadata, lines_per_plot=12):
+def summary_plot_histogram(ds, da, diag_metadata, lines_per_plot=12, **plot_options):
+    save_pngs = plot_options.get("save_pngs", False)
+    casename = ds.attrs["title"]
+    if save_pngs:
+        root_dir = plot_options.get("root_dir", "images")
+        kwargs = plot_options.get("savefig_kwargs", {})
+        isel_dict = diag_metadata.get("isel_dict", {})
+
     # histogram, all time levels in one plot
     hist_bins = 20
     hist_log = True
 
+    # Loop length
+    t_cnt = len(da["time"])
     for apply_log10 in _apply_log10_vals(diag_metadata):
         t_ind_beg = 0
-        for t_ind in range(len(da["time"])):
+        fig, ax = plt.subplots()
+        # fig.tight_layout()
+        for t_ind in range(t_cnt):
             to_plot = da.isel(time=t_ind)
             if "display_units" in diag_metadata:
                 to_plot = conv_units(to_plot, diag_metadata["display_units"])
             if apply_log10:
                 to_plot = np.log10(xr.where(to_plot > 0, to_plot, np.nan))
                 to_plot.name = f"log10({to_plot.name})"
-            to_plot.plot.hist(bins=hist_bins, log=hist_log, histtype="step")
+            # to_plot.plot.hist(bins=hist_bins, log=hist_log, histtype="step")
+            to_plot.plot.hist(ax=ax, bins=hist_bins, log=hist_log, histtype="step")
             if t_ind % lines_per_plot == lines_per_plot - 1:
-                t_beg = da.time.values[t_ind_beg]
+                t_beg = ds[ds["time"].attrs["bounds"]].values[t_ind_beg, 0]
                 t_str_beg = f"{t_beg.year:04}-{t_beg.month:02}-{t_beg.day:02}"
                 t_ind_end = t_ind
-                t_end = da.time.values[t_ind_end]
+                t_end = ds[ds["time"].attrs["bounds"]].values[
+                    t_ind_end, -1
+                ] - datetime.timedelta(days=1)
                 t_str_end = f"{t_end.year:04}-{t_end.month:02}-{t_end.day:02}"
                 plt.title(f"Histogram: {t_str_beg} : {t_str_end}")
                 t_ind_beg = t_ind_end + 1
-                plt.show()
+                if save_pngs:
+                    summary_hist = SummaryHistClass(
+                        da, casename, apply_log10, t_str_beg, t_str_end, isel_dict
+                    )
+                    summary_hist.savefig(fig, root_dir=root_dir, **kwargs)
+                else:
+                    plt.show()
+                plt.close(fig)
+                if t_ind != t_cnt - 1:
+                    fig, ax = plt.subplots()
+
         if t_ind % lines_per_plot != lines_per_plot - 1:
-            t_beg = da.time.values[t_ind_beg]
+            t_beg = ds[ds["time"].attrs["bounds"]].values[t_ind_beg, 0]
             t_str_beg = f"{t_beg.year:04}-{t_beg.month:02}-{t_beg.day:02}"
             t_ind_end = t_ind
-            t_end = da.time.values[t_ind_end]
+            t_end = ds[ds["time"].attrs["bounds"]].values[
+                t_ind_end, -1
+            ] - datetime.timedelta(days=1)
             t_str_end = f"{t_end.year:04}-{t_end.month:02}-{t_end.day:02}"
             plt.title(f"Histogram: {t_str_beg} : {t_str_end}")
-            plt.show()
+            if save_pngs:
+                summary_hist = SummaryHistClass(
+                    da, casename, t_str_beg, t_str_end, isel_dict
+                )
+                summary_hist.savefig(fig, root_dir=root_dir, **kwargs)
+            else:
+                plt.show()
+            plt.close(fig)
 
 
 ################################################################################
 
 
-def summary_plot_maps(da, diag_metadata):
+def summary_plot_maps(ds, da, diag_metadata, **plot_options):
+
+    save_pngs = plot_options.get("save_pngs", False)
+    casename = ds.attrs["title"]
+    if save_pngs:
+        root_dir = plot_options.get("root_dir", "images")
+        kwargs = plot_options.get("savefig_kwargs", {})
+        isel_dict = diag_metadata.get("isel_dict", {})
+
     # maps, 1 plots for time level
     cmap = "plasma"
 
@@ -223,14 +299,37 @@ def summary_plot_maps(da, diag_metadata):
                 to_plot = np.log10(xr.where(to_plot > 0.0, to_plot, np.nan))
                 to_plot.name = f"log10({to_plot.name})"
 
-            to_plot.plot(cmap=cmap, vmin=vmin, vmax=vmax)
-            plt.show()
+            ax = to_plot.plot(cmap=cmap, vmin=vmin, vmax=vmax)
+            fig = ax.get_figure()
+            if save_pngs:
+                datestamp = f"{da.time[t_ind].data.item()}".split(" ")[0]
+                summary_map = SummaryMapClass(
+                    da, casename, datestamp, apply_log10, isel_dict
+                )
+                summary_map.savefig(fig, root_dir=root_dir, **kwargs)
+            else:
+                plt.show()
+            plt.close(fig)
 
 
 ################################################################################
 
 
-def trend_plot(da, vmin=None, vmax=None, invert_yaxis=False):
+def trend_plot(ds, da, vmin=None, vmax=None, invert_yaxis=False, **plot_options):
+
+    save_pngs = plot_options.get("save_pngs", False)
+    casename = ds.attrs["title"]
+    if save_pngs:
+        root_dir = plot_options.get("root_dir", "images")
+        kwargs = plot_options.get("savefig_kwargs", {})
+        isel_dict = plot_options.get("isel_dict", {})
+        t_beg = ds[ds["time"].attrs["bounds"]].values[0, 0]
+        t_str_beg = f"{t_beg.year:04}-{t_beg.month:02}-{t_beg.day:02}"
+        t_end = ds[ds["time"].attrs["bounds"]].values[-1, -1] - datetime.timedelta(
+            days=1
+        )
+        t_str_end = f"{t_end.year:04}-{t_end.month:02}-{t_end.day:02}"
+
     trend = da.polyfit("time", 1).polyfit_coefficients.sel(degree=1)
     trend.name = da.name + " Trend"
     trend.attrs["long_name"] = da.attrs["long_name"] + " Trend"
@@ -241,15 +340,25 @@ def trend_plot(da, vmin=None, vmax=None, invert_yaxis=False):
 
     fig, ax = plt.subplots()
     trend.plot.hist(bins=20, log=True, ax=ax)
-    ax.set_title(da._title_for_slice())
-    plt.show()
+    plt.title(da._title_for_slice())
+    if save_pngs:
+        trend_hist = TrendHistClass(da, casename, t_str_beg, t_str_end, isel_dict)
+        trend_hist.savefig(fig, root_dir=root_dir, **kwargs)
+    else:
+        plt.show()
+    plt.close(fig)
 
     fig, ax = plt.subplots()
     trend.plot.pcolormesh(cmap="plasma", vmin=vmin, vmax=vmax, ax=ax)
-    ax.set_title(da._title_for_slice())
+    plt.title(da._title_for_slice())
     if invert_yaxis:
         ax.invert_yaxis()
-    plt.show()
+    if save_pngs:
+        trend_map = TrendMapClass(da, casename, t_str_beg, t_str_end, isel_dict)
+        trend_map.savefig(fig, root_dir=root_dir, **kwargs)
+    else:
+        plt.show()
+    plt.close(fig)
 
 
 ################################################################################

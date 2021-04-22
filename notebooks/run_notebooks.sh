@@ -8,11 +8,40 @@ usage () {
   echo "jupyter nbconvert --to notebook --inplace --ExecutePreprocessor.kernel_name=python \\
                   --ExecutePreprocessor.timeout=3600 --execute NOTEBOOK"
   echo ""
-  echo "Output from the slurm job is written in the logs/ directory,"
+  echo "Output from the pbs job is written in the logs/ directory,"
   echo "which will be created if it does not exist."
 }
 
 #########################
+
+# Function that creates a temporary script
+# that is submitted via qsub
+submit_pbs_script () {
+
+  nbname=`echo ${notebook} | sed -e "s/ /_/g"`
+
+  echo "running ${notebook}.ipynb..."
+  cat > ${nbname}.sub << EOF
+#!/bin/bash
+#
+#PBS -N ${nbname}
+#PBS -A P93300606
+#PBS -l select=1:ncpus=1:mem=100G
+#PBS -l walltime=6:00:00
+#PBS -q casper
+#PBS -j oe
+#PBS -m ea
+
+${set_env}
+jupyter nbconvert --to notebook --inplace --ExecutePreprocessor.kernel_name=python \\
+                  --ExecutePreprocessor.timeout=3600 --execute "${notebook}.ipynb"
+EOF
+
+  qsub ${nbname}.sub
+  rm -f ${nbname}.sub
+}
+
+########################
 
 # Function that creates a temporary script
 # that is submitted via sbatch
@@ -75,5 +104,5 @@ do
     continue
   fi
   notebook=`echo ${notebook_full} | cut -d '.' -f 1`
-  submit_slurm_script $notebook
+  submit_pbs_script $notebook
 done
