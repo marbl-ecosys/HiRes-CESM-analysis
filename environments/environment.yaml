@@ -20,13 +20,14 @@ dependencies:
     - eofs
     - esmpy
     - holoviews
+    - holoviz
     - intake
     - intake-esm
     - ipykernel
     - ipywidgets
     - jupyter-server-proxy
     - jupyter_contrib_nbextensions
-    - jupyterlab
+    - jupyterlab>=3
     - matplotlib
     - metpy
     - nc-time-axis
@@ -41,6 +42,7 @@ dependencies:
     - pre-commit
     - pytest
     - python
+    - pyviz
     - scipy
     - seaborn
     - seawater
@@ -56,4 +58,3 @@ dependencies:
     - zarr
     - pip:
         - ncar-jobqueue
-        - -r file:../requirements.txt
