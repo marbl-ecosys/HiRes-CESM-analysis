@@ -3,6 +3,8 @@ name: hires-marbl
 channels:
     - conda-forge
     - defaults
+    - pyviz
+    - holoviz
 
 dependencies:
     - black=19.10b0
