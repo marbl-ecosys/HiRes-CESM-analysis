@@ -1,0 +1,6 @@
+hvplot
+jupyterlab
+fsspec
+psutil
+aiohttp
+git+https://github.com/andersy005/panelify.git

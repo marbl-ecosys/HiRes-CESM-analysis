@@ -22,8 +22,6 @@ The first time you check out this repository, run
 
 ```
 $ conda env install -f environments/environment.yaml
-$ conda activate hires-marbl
-$ bash environments/postBuild
 ```
 
 If you notice the YAML file has changed after you fetch changes from github,

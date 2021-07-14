@@ -1,35 +1,34 @@
 name: hires-marbl
-
 channels:
     - conda-forge
-    - defaults
-
+    - nodefaults
 dependencies:
-    - black=19.10b0
-    - bokeh=1.4
+    - aiohttp
+    - bokeh
     - bottleneck
     - cartopy
-    - cf_units
+    - cf-units
     - cftime
     - cmocean
-    - dask==2.14
-    - dask-jobqueue
-    - dask-mpi
-    - distributed==2.14
+    - dask-jobqueue>=0.7.2
     - dask-labextension
+    - dask-mpi
+    - dask==2021.7.0
+    - distributed==2021.7.0
     - eofs
     - esmpy
-    - holoviews
+    - fsspec
+    - hvplot
     - intake
     - intake-esm
     - ipykernel
     - ipywidgets
     - jupyter-server-proxy
-    - jupyter_contrib_nbextensions
-    - jupyterlab
-    - matplotlib
+    - jupyterlab>=3
+    - matplotlib==3.4.2
     - metpy
     - nc-time-axis
+    - ncar-jobqueue
     - netcdf4
     - nodejs
     - numba
@@ -40,7 +39,7 @@ dependencies:
     - pop-tools
     - pre-commit
     - pytest
-    - python
+    - python=3.9
     - scipy
     - seaborn
     - seawater
@@ -48,11 +47,12 @@ dependencies:
     - toolz
     - tqdm
     - watermark
-    - xarray>=0.15.1
-    - xesmf # xarray interface it ESMF tools
-    - xgcm # General Circulation Model Postprocessing with xarray
-    - xhistogram # Fast, flexible, label-aware histograms for numpy and xarray
-    - xrft # fourier transforms for xarray data
+    - xarray==0.18.2
+    - xesmf
+    - xgcm
+    - xhistogram
+    - xrft
     - zarr
+    - pip
     - pip:
-        - ncar-jobqueue
+        - -r ../requirements.txt
