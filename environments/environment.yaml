@@ -53,5 +53,6 @@ dependencies:
     - xhistogram
     - xrft
     - zarr
+    - pip
     - pip:
-        - -e ../requirements.txt
+        - -r ../requirements.txt
