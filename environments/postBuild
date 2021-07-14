@@ -1,7 +1,0 @@
-#!/bin/bash
-
-jupyter labextension install \
-                            @jupyter-widgets/jupyterlab-manager \
-                            dask-labextension @pyviz/jupyterlab_pyviz
-
-#EOF
