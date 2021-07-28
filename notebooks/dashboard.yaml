@@ -4,6 +4,7 @@ summary_map:
         - "varname"
         - "date"
         - "apply_log10"
+        - "sel_dict"
     column_widget_types:
         date: "discrete_slider"
 
@@ -12,7 +13,7 @@ time_series:
         - "casename"
         - "varname"
         - "time_period"
-#     storage_option: {}
+        - "sel_dict"
 
 histogram:
     keys:
@@ -20,7 +21,7 @@ histogram:
         - "varname"
         - "time_period"
         - "apply_log10"
-#     storage_option: {}
+        - "sel_dict"
     column_widget_types:
         time_period: "discrete_slider"
 
@@ -30,4 +31,10 @@ trend_hist:
         - "varname"
         - "time_period"
         - "sel_dict"
-#     storage_options: {}
+
+trend_map:
+    keys:
+        - "casename"
+        - "varname"
+        - "time_period"
+        - "sel_dict"
