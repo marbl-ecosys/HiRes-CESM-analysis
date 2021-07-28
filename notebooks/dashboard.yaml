@@ -1,0 +1,33 @@
+summary_map:
+    keys:
+        - "casename"
+        - "varname"
+        - "date"
+        - "apply_log10"
+    column_widget_types:
+        date: "discrete_slider"
+
+time_series:
+    keys:
+        - "casename"
+        - "varname"
+        - "time_period"
+#     storage_option: {}
+
+histogram:
+    keys:
+        - "casename"
+        - "varname"
+        - "time_period"
+        - "apply_log10"
+#     storage_option: {}
+    column_widget_types:
+        time_period: "discrete_slider"
+
+trend_hist:
+    keys:
+        - "casename"
+        - "varname"
+        - "time_period"
+        - "sel_dict"
+#     storage_options: {}
