@@ -1,8 +1,5 @@
 # make methods available for usage externally and in notebooks
 
-import os
-
-
 from .CaseClass import CaseClass
 from .Plotting import (
     compare_fields_at_lat_lon,
@@ -18,5 +15,3 @@ from .utils import (
     timeseries_and_history_comparison,
     generate_plot_catalog,
 )
-
-notebooks_dir = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
